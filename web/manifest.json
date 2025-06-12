@@ -1,6 +1,6 @@
 {
-    "name": "event_management",
-    "short_name": "event_management",
+    "name": "event_management_app",
+    "short_name": "event_management_app",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
