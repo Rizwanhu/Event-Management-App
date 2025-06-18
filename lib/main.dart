@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'search_page.dart';
+import 'Feed.dart';
+import 'SearchScreen.dart';
 import 'event_detail_page.dart';
 import 'comments_page.dart';
 import 'promote_event_page.dart';
+import 'ProfileScreen.dart';
 import 'SplashScreen.dart';
 
 void main() {
@@ -39,10 +41,12 @@ class _MyHomePageState extends State<MyHomePage> {
   int _selectedIndex = 0;
 
   final List<Widget> _pages = [
-    const SearchPage(),
+    const SearchPage(), // Feed/Home page
+    const SearchScreen(), // Dedicated Search page
     const EventDetailPage(),
     const CommentsPage(),
     const PromoteEventPage(),
+    const ProfileScreen(),
   ];
 
   void _onItemTapped(int index) {
@@ -59,6 +63,10 @@ class _MyHomePageState extends State<MyHomePage> {
         type: BottomNavigationBarType.fixed,
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
             icon: Icon(Icons.search),
             label: 'Search',
           ),
@@ -71,12 +79,17 @@ class _MyHomePageState extends State<MyHomePage> {
             label: 'Comments',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.comment),
+            icon: Icon(Icons.trending_up),
             label: 'Promote',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profile',
           ),
         ],
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.deepPurple,
+        unselectedItemColor: Colors.grey,
         onTap: _onItemTapped,
       ),
     );
