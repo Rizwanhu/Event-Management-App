@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'main.dart';
 import 'signup.dart';
+import 'OnBoardingScreen.dart';
 
 enum UserRole { user, organizer, admin }
 
@@ -100,9 +101,14 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     setState(() => _isLoading = false);
 
     if (isAuthenticated) {
+      // Check if user needs onboarding (in real app, check from user profile)
+      bool needsOnboarding = true; // Mock - check user's onboarding status
+      
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (context) => const MyHomePage(title: 'Event Management'),
+          builder: (context) => needsOnboarding 
+              ? const OnBoardingScreen()
+              : const MyHomePage(title: 'Event Management'),
         ),
       );
     } else {
@@ -415,7 +421,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                           onPressed: () {
                             Navigator.of(context).pushReplacement(
                               MaterialPageRoute(
-                                builder: (context) => const MyHomePage(title: 'Event Management'),
+                                builder: (context) => const OnBoardingScreen(),
                               ),
                             );
                           },
