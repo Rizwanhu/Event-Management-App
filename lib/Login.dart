@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'main.dart';
 import 'signup.dart';
 import 'OnBoardingScreen.dart';
+import 'Admin/dashboard_screen.dart';
 
 enum UserRole { user, organizer, admin }
 
@@ -101,16 +102,26 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     setState(() => _isLoading = false);
 
     if (isAuthenticated) {
-      // Check if user needs onboarding (in real app, check from user profile)
-      bool needsOnboarding = true; // Mock - check user's onboarding status
-      
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (context) => needsOnboarding 
-              ? const OnBoardingScreen()
-              : const MyHomePage(title: 'Event Management'),
-        ),
-      );
+      // Navigate based on user role
+      if (_selectedRole == UserRole.admin) {
+        // Admin goes to dashboard
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => const AdminDashboardScreen(),
+          ),
+        );
+      } else {
+        // Regular users and organizers go to onboarding or main app
+        bool needsOnboarding = true; // Mock - check user's onboarding status
+        
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => needsOnboarding 
+                ? const OnBoardingScreen()
+                : const MyHomePage(title: 'Event Management'),
+          ),
+        );
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
