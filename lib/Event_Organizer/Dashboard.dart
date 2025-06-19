@@ -1212,6 +1212,38 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
     );
   }
 
+  // Navigation to Boost Event page or dialog
+  void _navigateToBoostEvent() {
+    Navigator.pop(context); // Close drawer if open
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => BoostEventPage()),
+    );
+  }
+
+  // Handle popup menu selection
+  void _handleMenuSelection(String value) {
+    switch (value) {
+      case 'boost':
+        _navigateToBoostEvent();
+        break;
+      case 'analytics':
+        _navigateToAnalytics();
+        break;
+      case 'management':
+        _navigateToManagement();
+        break;
+      case 'report':
+        _navigateToReport();
+        break;
+      case 'managers':
+        _navigateToManagers();
+        break;
+      default:
+        break;
+    }
+  }
+
   @override
   void dispose() {
     _tabController.dispose();
