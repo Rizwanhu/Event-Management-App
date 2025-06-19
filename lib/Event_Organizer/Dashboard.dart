@@ -144,109 +144,124 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
     double totalRevenue = events.fold(0.0, (sum, event) => sum + event.revenue);
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Welcome Section
           Container(
-            padding: const EdgeInsets.all(20),
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [Colors.deepPurple.shade400, Colors.purple.shade500],
               ),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Row(
+            child: Column(
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Welcome back!',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Welcome back!',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Manage your events and track performance',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.9),
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Manage your events and track performance',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.9),
-                          fontSize: 14,
-                        ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.event_available,
-                    color: Colors.white,
-                    size: 32,
-                  ),
+                      child: const Icon(
+                        Icons.event_available,
+                        color: Colors.white,
+                        size: 28,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
           
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
           
-          // Stats Grid
-          GridView.count(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 2,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            childAspectRatio: 1.5,
-            children: [
-              _buildStatCard(
-                'Total Events',
-                '$totalEvents',
-                Icons.event,
-                Colors.blue,
-              ),
-              _buildStatCard(
-                'Tickets Sold',
-                '$totalTicketsSold',
-                Icons.confirmation_number,
-                Colors.green,
-              ),
-              _buildStatCard(
-                'Upcoming',
-                '$upcomingEvents',
-                Icons.schedule,
-                Colors.orange,
-              ),
-              _buildStatCard(
-                'Revenue',
-                '\$${totalRevenue.toStringAsFixed(0)}',
-                Icons.attach_money,
-                Colors.purple,
-              ),
-            ],
+          // Stats Grid - Responsive
+          LayoutBuilder(
+            builder: (context, constraints) {
+              double screenWidth = constraints.maxWidth;
+              int crossAxisCount = screenWidth > 600 ? 4 : 2;
+              double childAspectRatio = screenWidth > 600 ? 1.3 : 1.4;
+              
+              return GridView.count(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: crossAxisCount,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: childAspectRatio,
+                children: [
+                  _buildStatCard(
+                    'Total Events',
+                    '$totalEvents',
+                    Icons.event,
+                    Colors.blue,
+                  ),
+                  _buildStatCard(
+                    'Tickets Sold',
+                    '$totalTicketsSold',
+                    Icons.confirmation_number,
+                    Colors.green,
+                  ),
+                  _buildStatCard(
+                    'Upcoming',
+                    '$upcomingEvents',
+                    Icons.schedule,
+                    Colors.orange,
+                  ),
+                  _buildStatCard(
+                    'Revenue',
+                    '\$${totalRevenue.toStringAsFixed(0)}',
+                    Icons.attach_money,
+                    Colors.purple,
+                  ),
+                ],
+              );
+            },
           ),
           
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
           
           // Recent Events
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Recent Events',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+              const Expanded(
+                child: Text(
+                  'Recent Events',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
               TextButton(
@@ -258,7 +273,11 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
           
           const SizedBox(height: 12),
           
+          // Recent Events List with proper constraints
           ...events.take(3).map((event) => _buildEventCard(event, isCompact: true)),
+          
+          // Add bottom padding to prevent overflow
+          const SizedBox(height: 80),
         ],
       ),
     );
@@ -267,39 +286,45 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
   Widget _buildEventsTab() {
     return Column(
       children: [
-        // Filter Bar
+        // Filter Bar - Mobile responsive
         Container(
           padding: const EdgeInsets.all(16),
           color: Colors.white,
-          child: Row(
+          child: Column(
             children: [
-              Expanded(
-                child: TextField(
-                  decoration: InputDecoration(
-                    hintText: 'Search events...',
-                    prefixIcon: const Icon(Icons.search),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
+              // Search and Filter Row
+              Row(
+                children: [
+                  Expanded(
+                    flex: 4,
+                    child: TextField(
+                      decoration: InputDecoration(
+                        hintText: 'Search events...',
+                        prefixIcon: const Icon(Icons.search, size: 20),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        isDense: true,
+                      ),
                     ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.shade300),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.filter_list, size: 20),
-                    const SizedBox(width: 4),
-                    const Text('Filter'),
-                  ],
-                ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 1,
+                    child: Container(
+                      height: 40,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade300),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Center(
+                        child: Icon(Icons.filter_list, size: 20),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -321,13 +346,13 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
 
   Widget _buildAnalyticsTab() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Revenue Chart
+          // Revenue Chart - Mobile responsive
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
@@ -349,21 +374,23 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
                 
-                // Mock Line Chart
-                Container(
-                  height: 200,
+                // Chart container with constraints
+                SizedBox(
+                  height: 180,
+                  width: double.infinity,
                   child: CustomPaint(
                     painter: LineChartPainter(),
-                    size: const Size(double.infinity, 200),
                   ),
                 ),
                 
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                // Legend - Mobile responsive
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 20,
                   children: [
                     _buildChartLegend('This Month', Colors.deepPurple),
                     _buildChartLegend('Last Month', Colors.grey),
@@ -373,54 +400,77 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
             ),
           ),
           
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
           
-          // Performance Metrics
-          Row(
-            children: [
-              Expanded(
-                child: _buildMetricCard(
-                  'Conversion Rate',
-                  '24.5%',
-                  '+2.1%',
-                  Colors.green,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildMetricCard(
-                  'Avg. Rating',
-                  '4.2',
-                  '+0.3',
-                  Colors.amber,
-                ),
-              ),
-            ],
+          // Performance Metrics - Responsive Grid
+          LayoutBuilder(
+            builder: (context, constraints) {
+              if (constraints.maxWidth > 600) {
+                return Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildMetricCard(
+                            'Conversion Rate',
+                            '24.5%',
+                            '+2.1%',
+                            Colors.green,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: _buildMetricCard(
+                            'Avg. Rating',
+                            '4.2',
+                            '+0.3',
+                            Colors.amber,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildMetricCard(
+                            'Total Views',
+                            '12.4K',
+                            '+15%',
+                            Colors.blue,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: _buildMetricCard(
+                            'Engagement',
+                            '8.7%',
+                            '+1.2%',
+                            Colors.purple,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                );
+              } else {
+                return Column(
+                  children: [
+                    _buildMetricCard('Conversion Rate', '24.5%', '+2.1%', Colors.green),
+                    const SizedBox(height: 12),
+                    _buildMetricCard('Avg. Rating', '4.2', '+0.3', Colors.amber),
+                    const SizedBox(height: 12),
+                    _buildMetricCard('Total Views', '12.4K', '+15%', Colors.blue),
+                    const SizedBox(height: 12),
+                    _buildMetricCard('Engagement', '8.7%', '+1.2%', Colors.purple),
+                  ],
+                );
+              }
+            },
           ),
           
-          const SizedBox(height: 16),
-          
-          Row(
-            children: [
-              Expanded(
-                child: _buildMetricCard(
-                  'Total Views',
-                  '12.4K',
-                  '+15%',
-                  Colors.blue,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildMetricCard(
-                  'Engagement',
-                  '8.7%',
-                  '+1.2%',
-                  Colors.purple,
-                ),
-              ),
-            ],
-          ),
+          // Add bottom padding
+          const SizedBox(height: 80),
         ],
       ),
     );
@@ -428,13 +478,14 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
 
   Widget _buildInsightsTab() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Top Performing Event
           Container(
-            padding: const EdgeInsets.all(20),
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [Colors.amber.shade400, Colors.orange.shade500],
@@ -448,12 +499,14 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                   children: [
                     const Icon(Icons.emoji_events, color: Colors.white, size: 24),
                     const SizedBox(width: 8),
-                    const Text(
-                      'Top Performing Event',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                    const Expanded(
+                      child: Text(
+                        'Top Performing Event',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ],
@@ -463,7 +516,7 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                   'Summer Music Festival 2024',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 16,
+                    fontSize: 15,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -472,14 +525,14 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                   '245 tickets sold • 4.2★ rating • \$18,750 revenue',
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.9),
-                    fontSize: 14,
+                    fontSize: 13,
                   ),
                 ),
               ],
             ),
           ),
           
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
           
           // Recent Reviews
           const Text(
@@ -492,9 +545,10 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
           
           const SizedBox(height: 12),
           
+          // Reviews with proper constraints
           ...List.generate(3, (index) => _buildReviewCard(index)),
           
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
           
           // Quick Actions
           const Text(
@@ -507,40 +561,52 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
           
           const SizedBox(height: 12),
           
-          GridView.count(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 2,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            childAspectRatio: 1.8,
-            children: [
-              _buildActionCard(
-                'Boost Event',
-                Icons.trending_up,
-                Colors.green,
-                () => _showBoostEventDialog(),
-              ),
-              _buildActionCard(
-                'View Analytics',
-                Icons.analytics,
-                Colors.blue,
-                () => _tabController.animateTo(2),
-              ),
-              _buildActionCard(
-                'Export Data',
-                Icons.download,
-                Colors.purple,
-                () {},
-              ),
-              _buildActionCard(
-                'Settings',
-                Icons.settings,
-                Colors.grey,
-                () {},
-              ),
-            ],
+          // Quick Actions Grid - Responsive
+          LayoutBuilder(
+            builder: (context, constraints) {
+              double screenWidth = constraints.maxWidth;
+              int crossAxisCount = screenWidth > 600 ? 4 : 2;
+              double childAspectRatio = screenWidth > 600 ? 1.6 : 1.8;
+              
+              return GridView.count(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: crossAxisCount,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: childAspectRatio,
+                children: [
+                  _buildActionCard(
+                    'Boost Event',
+                    Icons.trending_up,
+                    Colors.green,
+                    () => _showBoostEventDialog(),
+                  ),
+                  _buildActionCard(
+                    'View Analytics',
+                    Icons.analytics,
+                    Colors.blue,
+                    () => _tabController.animateTo(2),
+                  ),
+                  _buildActionCard(
+                    'Export Data',
+                    Icons.download,
+                    Colors.purple,
+                    () {},
+                  ),
+                  _buildActionCard(
+                    'Settings',
+                    Icons.settings,
+                    Colors.grey,
+                    () {},
+                  ),
+                ],
+              );
+            },
           ),
+          
+          // Add bottom padding to prevent FAB overlap
+          const SizedBox(height: 80),
         ],
       ),
     );
@@ -548,49 +614,56 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
 
   Widget _buildStatCard(String title, String value, IconData icon, Color color) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
+            blurRadius: 8,
             offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(icon, color: color, size: 24),
+              Icon(icon, color: color, size: 20),
               Container(
-                padding: const EdgeInsets.all(4),
+                padding: const EdgeInsets.all(3),
                 decoration: BoxDecoration(
                   color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(6),
                 ),
-                child: Icon(Icons.trending_up, color: color, size: 16),
+                child: Icon(Icons.trending_up, color: color, size: 12),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+          const SizedBox(height: 8),
+          Flexible(
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey.shade600,
+          const SizedBox(height: 2),
+          Flexible(
+            child: Text(
+              title,
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.grey.shade600,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
@@ -600,15 +673,15 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
 
   Widget _buildEventCard(Event event, {bool isCompact = false}) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
+            blurRadius: 8,
             offset: const Offset(0, 2),
           ),
         ],
@@ -625,15 +698,17 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                     Text(
                       event.title,
                       style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: 15,
                         fontWeight: FontWeight.bold,
                       ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 2,
                     ),
                     const SizedBox(height: 4),
                     Text(
                       '${event.date.day}/${event.date.month}/${event.date.year}',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 13,
                         color: Colors.grey.shade600,
                       ),
                     ),
@@ -645,74 +720,133 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
           ),
           
           if (!isCompact) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             
-            // Event Stats
-            Row(
-              children: [
-                Expanded(
-                  child: _buildEventStat(
-                    'Tickets Sold',
-                    '${event.ticketsSold}/${event.totalTickets}',
-                    event.ticketsSold / event.totalTickets,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildEventStat(
-                    'Revenue',
-                    '\$${event.revenue.toStringAsFixed(0)}',
-                    null,
-                  ),
-                ),
-              ],
+            // Event Stats - Mobile responsive layout
+            LayoutBuilder(
+              builder: (context, constraints) {
+                if (constraints.maxWidth > 300) {
+                  return Row(
+                    children: [
+                      Expanded(
+                        child: _buildEventStat(
+                          'Tickets Sold',
+                          '${event.ticketsSold}/${event.totalTickets}',
+                          event.ticketsSold / event.totalTickets,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildEventStat(
+                          'Revenue',
+                          '\$${event.revenue.toStringAsFixed(0)}',
+                          null,
+                        ),
+                      ),
+                    ],
+                  );
+                } else {
+                  return Column(
+                    children: [
+                      _buildEventStat(
+                        'Tickets Sold',
+                        '${event.ticketsSold}/${event.totalTickets}',
+                        event.ticketsSold / event.totalTickets,
+                      ),
+                      const SizedBox(height: 12),
+                      _buildEventStat(
+                        'Revenue',
+                        '\$${event.revenue.toStringAsFixed(0)}',
+                        null,
+                      ),
+                    ],
+                  );
+                }
+              },
             ),
             
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             
-            // Social Stats
-            Row(
+            // Social Stats - Wrap for mobile
+            Wrap(
+              spacing: 12,
+              runSpacing: 6,
               children: [
                 _buildSocialStat(Icons.favorite, event.likes.toString(), Colors.red),
-                const SizedBox(width: 16),
                 _buildSocialStat(Icons.comment, event.comments.toString(), Colors.blue),
-                const SizedBox(width: 16),
                 _buildSocialStat(Icons.share, event.shares.toString(), Colors.green),
-                const SizedBox(width: 16),
                 if (event.rating > 0)
                   _buildSocialStat(Icons.star, event.rating.toStringAsFixed(1), Colors.amber),
               ],
             ),
             
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             
-            // Action Buttons
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () => _showBoostEventDialog(),
-                    icon: const Icon(Icons.trending_up, size: 18),
-                    label: const Text('Boost'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.green,
-                      side: const BorderSide(color: Colors.green),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {},
-                    icon: const Icon(Icons.edit, size: 18),
-                    label: const Text('Edit'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.deepPurple,
-                      foregroundColor: Colors.white,
-                    ),
-                  ),
-                ),
-              ],
+            // Action Buttons - Responsive
+            LayoutBuilder(
+              builder: (context, constraints) {
+                if (constraints.maxWidth > 300) {
+                  return Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => _showBoostEventDialog(),
+                          icon: const Icon(Icons.trending_up, size: 16),
+                          label: const Text('Boost', style: TextStyle(fontSize: 13)),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.green,
+                            side: const BorderSide(color: Colors.green),
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () {},
+                          icon: const Icon(Icons.edit, size: 16),
+                          label: const Text('Edit', style: TextStyle(fontSize: 13)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.deepPurple,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                } else {
+                  return Column(
+                    children: [
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () => _showBoostEventDialog(),
+                          icon: const Icon(Icons.trending_up, size: 16),
+                          label: const Text('Boost'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.green,
+                            side: const BorderSide(color: Colors.green),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () {},
+                          icon: const Icon(Icons.edit, size: 16),
+                          label: const Text('Edit'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.deepPurple,
+                            foregroundColor: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                }
+              },
             ),
           ],
         ],
@@ -720,100 +854,16 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
     );
   }
 
-  Widget _buildStatusBadge(EventStatus status) {
-    Color color;
-    String text;
-    
-    switch (status) {
-      case EventStatus.pending:
-        color = Colors.orange;
-        text = 'Pending';
-        break;
-      case EventStatus.approved:
-        color = Colors.blue;
-        text = 'Approved';
-        break;
-      case EventStatus.live:
-        color = Colors.green;
-        text = 'Live';
-        break;
-    }
-    
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.3)),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: color,
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEventStat(String label, String value, double? progress) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey.shade600,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        if (progress != null) ...[
-          const SizedBox(height: 4),
-          LinearProgressIndicator(
-            value: progress,
-            backgroundColor: Colors.grey.shade200,
-            valueColor: AlwaysStoppedAnimation<Color>(Colors.deepPurple),
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildSocialStat(IconData icon, String value, Color color) {
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: color),
-        const SizedBox(width: 4),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildMetricCard(String title, String value, String change, Color color) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
+            blurRadius: 8,
             offset: const Offset(0, 2),
           ),
         ],
@@ -824,21 +874,25 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
           Text(
             title,
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 13,
               color: Colors.grey.shade600,
             ),
+            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 8),
           Row(
             children: [
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+              Expanded(
+                child: Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
@@ -848,7 +902,7 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                 child: Text(
                   change,
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 11,
                     color: color,
                     fontWeight: FontWeight.bold,
                   ),
@@ -979,7 +1033,7 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: color.withOpacity(0.1),
           borderRadius: BorderRadius.circular(12),
@@ -988,16 +1042,19 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: color, size: 32),
-            const SizedBox(height: 8),
-            Text(
-              title,
-              style: TextStyle(
-                color: color,
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
+            Icon(icon, color: color, size: 28),
+            const SizedBox(height: 6),
+            Flexible(
+              child: Text(
+                title,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.ellipsis,
               ),
-              textAlign: TextAlign.center,
             ),
           ],
         ),
@@ -1022,6 +1079,57 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildEventStat(String title, String value, double? progress) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey.shade600,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        if (progress != null) ...[
+          const SizedBox(height: 4),
+          LinearProgressIndicator(
+            value: progress.clamp(0.0, 1.0),
+            minHeight: 5,
+            backgroundColor: Colors.grey.shade200,
+            color: Colors.deepPurple,
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildSocialStat(IconData icon, String value, Color color) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, color: color, size: 16),
+        const SizedBox(width: 4),
+        Text(
+          value,
+          style: TextStyle(
+            color: color,
+            fontWeight: FontWeight.bold,
+            fontSize: 13,
+          ),
+        ),
+      ],
     );
   }
 
@@ -1062,6 +1170,44 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
             child: const Text('Boost Now'),
           ),
         ],
+      ),
+    );
+  }
+
+  // Widget to display event status as a badge
+  Widget _buildStatusBadge(EventStatus status) {
+    String label;
+    Color color;
+    switch (status) {
+      case EventStatus.pending:
+        label = 'Pending';
+        color = Colors.orange;
+        break;
+      case EventStatus.approved:
+        label = 'Approved';
+        color = Colors.blue;
+        break;
+      case EventStatus.live:
+        label = 'Live';
+        color = Colors.green;
+        break;
+      default:
+        label = 'Unknown';
+        color = Colors.grey;
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.bold,
+          fontSize: 12,
+        ),
       ),
     );
   }
