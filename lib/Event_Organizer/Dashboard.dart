@@ -944,8 +944,9 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                     ),
                     Row(
                       children: List.generate(5, (i) {
+                        final int rating = review['rating'] as int;
                         return Icon(
-                          i < review['rating'] as int ? Icons.star : Icons.star_border,
+                          i < rating ? Icons.star : Icons.star_border,
                           color: Colors.amber,
                           size: 16,
                         );
