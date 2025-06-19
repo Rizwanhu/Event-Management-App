@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'EventQNAScreen.dart';
+import 'PostEventReviewScreen.dart';
 
 class EventDetailPage extends StatefulWidget {
   const EventDetailPage({super.key});
@@ -9,7 +11,13 @@ class EventDetailPage extends StatefulWidget {
 
 class _EventDetailPageState extends State<EventDetailPage> {
   bool isLiked = false;
+  bool isRSVPd = false;
   int likeCount = 245;
+  int commentCount = 42;
+  String selectedPassType = '';
+  bool isEventPast = true; // Mock: Event has already happened
+  bool hasUserAttended = true; // Mock: User attended the event
+  bool hasUserReviewed = false; // Mock: User hasn't reviewed yet
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +32,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.share, color: Colors.black),
-            onPressed: () {},
+            onPressed: () => _showShareOptions(),
           ),
         ],
       ),
@@ -32,42 +40,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Event Image
-            Container(
-              height: 250,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
-              ),
-              child: Stack(
-                children: [
-                  const Center(
-                    child: Icon(Icons.image, size: 80, color: Colors.grey),
-                  ),
-                  // Boosted Badge
-                  Positioned(
-                    top: 20,
-                    right: 20,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.orange,
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      child: const Text(
-                        'Boosted',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            // Event Banner/Media Section
+            _buildMediaSection(),
             
             // Event Details
             Padding(
@@ -88,9 +62,14 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   // Event Info
                   _buildInfoRow(Icons.calendar_today, 'December 25, 2024 • 7:00 PM'),
                   const SizedBox(height: 8),
-                  _buildInfoRow(Icons.location_on, 'Madison Square Garden, New York'),
-                  const SizedBox(height: 8),
-                  _buildInfoRow(Icons.person, 'Organized by MusicEvents Inc.'),
+                  GestureDetector(
+                    onTap: () => _showLocationMap(),
+                    child: _buildInfoRow(Icons.location_on, 'Madison Square Garden, New York', isClickable: true),
+                  ),
+                  const SizedBox(height: 20),
+                  
+                  // Organizer Section
+                  _buildOrganizerSection(),
                   const SizedBox(height: 20),
                   
                   // Description
@@ -112,87 +91,36 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   ),
                   const SizedBox(height: 20),
                   
-                  // Tickets Section
+                  // Pass Types Section
                   const Text(
-                    'Tickets',
+                    'Pass Types',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 12),
-                  _buildTicketCard('General Admission', '\$75', 'Access to main floor'),
+                  _buildPassTypeCard('Free RSVP', 'Free', 'General access to the event', true),
                   const SizedBox(height: 8),
-                  _buildTicketCard('VIP Package', '\$150', 'Premium seating + backstage access'),
+                  _buildPassTypeCard('General Admission', '\$75', 'Access to main floor', false),
+                  const SizedBox(height: 8),
+                  _buildPassTypeCard('VIP Package', '\$150', 'Premium seating + backstage access', false),
                   const SizedBox(height: 20),
                   
-                  // Action Buttons
-                  Row(
-                    children: [
-                      // Like Button
-                      GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            isLiked = !isLiked;
-                            likeCount += isLiked ? 1 : -1;
-                          });
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          decoration: BoxDecoration(
-                            color: isLiked ? Colors.red.withOpacity(0.1) : Colors.grey.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(25),
-                            border: Border.all(
-                              color: isLiked ? Colors.red : Colors.grey,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                isLiked ? Icons.favorite : Icons.favorite_border,
-                                color: isLiked ? Colors.red : Colors.grey,
-                                size: 20,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                '$likeCount',
-                                style: TextStyle(
-                                  color: isLiked ? Colors.red : Colors.grey,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      
-                      // Comment Button
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(25),
-                          border: Border.all(color: Colors.grey),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.comment_outlined, color: Colors.grey, size: 20),
-                            SizedBox(width: 6),
-                            Text(
-                              '42',
-                              style: TextStyle(
-                                color: Colors.grey,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+                  // Social Actions
+                  _buildSocialActions(),
+                  const SizedBox(height: 20),
+                  
+                  // Q&A and Chat Section
+                  _buildQAChatSection(),
+                  const SizedBox(height: 20),
+                  
+                  // Reviews Section (for past events)
+                  if (isEventPast) _buildReviewsSection(),
+                  if (isEventPast) const SizedBox(height: 20),
+                  
+                  // Join Chat Button (shown only if RSVP'd)
+                  if (isRSVPd) _buildJoinChatButton(),
                   const SizedBox(height: 30),
                 ],
               ),
@@ -201,7 +129,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
         ),
       ),
       
-      // Bottom Buy Button
+      // Bottom Action Button
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
@@ -218,18 +146,18 @@ class _EventDetailPageState extends State<EventDetailPage> {
         child: SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: () {},
+            onPressed: () => _handleMainAction(),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.deepPurple,
+              backgroundColor: selectedPassType == 'Free RSVP' ? Colors.green : Colors.deepPurple,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: const Text(
-              'Buy Tickets',
-              style: TextStyle(
+            child: Text(
+              _getMainActionText(),
+              style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
@@ -240,64 +168,1194 @@ class _EventDetailPageState extends State<EventDetailPage> {
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String text) {
-    return Row(
-      children: [
-        Icon(icon, size: 20, color: Colors.grey),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            text,
-            style: const TextStyle(
-              fontSize: 16,
-              color: Colors.grey,
+  Widget _buildMediaSection() {
+    return Container(
+      height: 250,
+      child: PageView(
+        children: [
+          // Main Banner
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
+            ),
+            child: Stack(
+              children: [
+                const Center(
+                  child: Icon(Icons.image, size: 80, color: Colors.grey),
+                ),
+                // Boosted Badge
+                Positioned(
+                  top: 20,
+                  right: 20,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.orange,
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: const Text(
+                      'Boosted',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                // Media indicator
+                Positioned(
+                  bottom: 20,
+                  left: 20,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.black54,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text(
+                      '1/3',
+                      style: TextStyle(color: Colors.white, fontSize: 12),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-        ),
-      ],
+          // Promo Video Placeholder
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.black87,
+              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
+            ),
+            child: const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.play_circle_fill, size: 80, color: Colors.white),
+                  SizedBox(height: 8),
+                  Text(
+                    'Promo Video',
+                    style: TextStyle(color: Colors.white, fontSize: 16),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildTicketCard(String title, String price, String description) {
+  Widget _buildOrganizerSection() {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade300),
+        color: Colors.grey.shade50,
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
       ),
       child: Row(
         children: [
+          CircleAvatar(
+            radius: 25,
+            backgroundColor: Colors.deepPurple,
+            child: const Text(
+              'ME',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+          ),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(
+                const Text(
+                  'MusicEvents Inc.',
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  description,
-                  style: const TextStyle(
+                  'Event Organizer • 4.8⭐ (120 reviews)',
+                  style: TextStyle(
                     fontSize: 14,
-                    color: Colors.grey,
+                    color: Colors.grey.shade600,
                   ),
                 ),
               ],
             ),
           ),
-          Text(
-            price,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.deepPurple,
+          TextButton(
+            onPressed: () {},
+            child: const Text('Follow'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPassTypeCard(String title, String price, String description, bool isFree) {
+    bool isSelected = selectedPassType == title;
+    
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          selectedPassType = isSelected ? '' : title;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: isSelected ? Colors.deepPurple : Colors.grey.shade300,
+            width: isSelected ? 2 : 1,
+          ),
+          borderRadius: BorderRadius.circular(12),
+          color: isSelected ? Colors.deepPurple.withOpacity(0.05) : null,
+        ),
+        child: Row(
+          children: [
+            Radio<String>(
+              value: title,
+              groupValue: selectedPassType,
+              onChanged: (value) {
+                setState(() {
+                  selectedPassType = value ?? '';
+                });
+              },
+            ),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      if (isFree) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.green,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Text(
+                            'FREE',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    description,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Text(
+              price,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: isFree ? Colors.green : Colors.deepPurple,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSocialActions() {
+    return Row(
+      children: [
+        // Like Button
+        GestureDetector(
+          onTap: () {
+            setState(() {
+              isLiked = !isLiked;
+              likeCount += isLiked ? 1 : -1;
+            });
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: isLiked ? Colors.red.withOpacity(0.1) : Colors.grey.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(25),
+              border: Border.all(
+                color: isLiked ? Colors.red : Colors.grey,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  isLiked ? Icons.favorite : Icons.favorite_border,
+                  color: isLiked ? Colors.red : Colors.grey,
+                  size: 20,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  '$likeCount',
+                  style: TextStyle(
+                    color: isLiked ? Colors.red : Colors.grey,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        
+        // Comment Button
+        GestureDetector(
+          onTap: () => _showComments(),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.grey.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(25),
+              border: Border.all(color: Colors.grey),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.comment_outlined, color: Colors.grey, size: 20),
+                const SizedBox(width: 6),
+                Text(
+                  '$commentCount',
+                  style: const TextStyle(
+                    color: Colors.grey,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const Spacer(),
+        
+        // Share Button
+        IconButton(
+          onPressed: () => _showShareOptions(),
+          icon: const Icon(Icons.share_outlined, color: Colors.grey),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQAChatSection() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.blue.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.blue.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.forum, color: Colors.deepPurple, size: 24),
+              const SizedBox(width: 12),
+              const Text(
+                'Event Discussion',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Join the conversation! Ask questions, chat with other attendees, and get answers from the organizer.',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const EventQNAScreen(
+                          eventTitle: 'Summer Music Festival 2024',
+                          isChatEnabled: true,
+                          isQAEnabled: true,
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.help_outline, size: 20),
+                  label: const Text('Q&A'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.deepPurple,
+                    side: BorderSide(color: Colors.deepPurple),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const EventQNAScreen(
+                          eventTitle: 'Summer Music Festival 2024',
+                          isChatEnabled: true,
+                          isQAEnabled: true,
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.chat_bubble_outline, size: 20),
+                  label: const Text('Chat'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.deepPurple,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                decoration: const BoxDecoration(
+                  color: Colors.green,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                '24 people online',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey,
+                ),
+              ),
+              const Spacer(),
+              const Text(
+                '15 questions answered',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReviewsSection() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.amber.shade50,
+            Colors.orange.shade50,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.amber.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.amber.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header Section
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.8),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.shade100,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.star_rounded,
+                        color: Colors.amber.shade700,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Event Reviews',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        Text(
+                          'See what attendees are saying',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                
+                const SizedBox(height: 16),
+                
+                // Rating Summary Card
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.amber.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      // Large Rating Display
+                      Column(
+                        children: [
+                          Text(
+                            '4.2',
+                            style: TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.amber.shade700,
+                            ),
+                          ),
+                          Row(
+                            children: List.generate(5, (index) {
+                              return Icon(
+                                index < 4 ? Icons.star_rounded : 
+                                index < 4.2 ? Icons.star_half_rounded : Icons.star_border_rounded,
+                                color: Colors.amber.shade600,
+                                size: 20,
+                              );
+                            }),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '127 reviews',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey.shade600,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                      
+                      const SizedBox(width: 24),
+                      
+                      // Rating Distribution
+                      Expanded(
+                        child: Column(
+                          children: [
+                            _buildRatingDistributionBar(5, 89, 127),
+                            _buildRatingDistributionBar(4, 23, 127),
+                            _buildRatingDistributionBar(3, 8, 127),
+                            _buildRatingDistributionBar(2, 3, 127),
+                            _buildRatingDistributionBar(1, 4, 127),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // Action Buttons Section
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                if (hasUserAttended && !hasUserReviewed) ...[
+                  // Write Review Button (Primary)
+                  Container(
+                    width: double.infinity,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Colors.amber.shade400, Colors.orange.shade500],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.amber.withOpacity(0.3),
+                          spreadRadius: 1,
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const PostEventReviewScreen(
+                              eventTitle: 'Summer Music Festival 2024',
+                              eventId: 'event_123',
+                              hasUserReviewed: false,
+                            ),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      icon: const Icon(Icons.rate_review_rounded, color: Colors.white, size: 22),
+                      label: const Text(
+                        'Write Your Review',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                
+                // View All Reviews Button
+                Container(
+                  width: double.infinity,
+                  height: 50,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const PostEventReviewScreen(
+                            eventTitle: 'Summer Music Festival 2024',
+                            eventId: 'event_123',
+                            hasUserReviewed: true,
+                          ),
+                        ),
+                      );
+                    },
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.amber.shade700,
+                      side: BorderSide(color: Colors.amber.shade300, width: 1.5),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    icon: Icon(Icons.reviews_rounded, color: Colors.amber.shade700, size: 22),
+                    label: Text(
+                      'View All Reviews',
+                      style: TextStyle(
+                        color: Colors.amber.shade700,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+                
+                const SizedBox(height: 20),
+                
+                // Featured Review Preview
+                _buildFeaturedReviewPreview(),
+              ],
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildRatingDistributionBar(int stars, int count, int totalReviews) {
+    double percentage = count / totalReviews;
+    
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        children: [
+          Text(
+            '$stars',
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Icon(
+            Icons.star_rounded,
+            size: 12,
+            color: Colors.amber.shade600,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Container(
+              height: 6,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade200,
+                borderRadius: BorderRadius.circular(3),
+              ),
+              child: FractionallySizedBox(
+                alignment: Alignment.centerLeft,
+                widthFactor: percentage,
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Colors.amber.shade400, Colors.amber.shade600],
+                    ),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 25,
+            child: Text(
+              '$count',
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeaturedReviewPreview() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            spreadRadius: 1,
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Featured Badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.purple.shade400, Colors.deepPurple.shade500],
+              ),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                bottomRight: Radius.circular(12),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.emoji_events_rounded,
+                  color: Colors.white,
+                  size: 16,
+                ),
+                const SizedBox(width: 4),
+                const Text(
+                  'Featured Review',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // Review Content
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // User Info
+                Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Colors.deepPurple.shade400, Colors.purple.shade500],
+                        ),
+                        borderRadius: BorderRadius.circular(22),
+                        border: Border.all(color: Colors.white, width: 2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.deepPurple.withOpacity(0.3),
+                            spreadRadius: 1,
+                            blurRadius: 4,
+                          ),
+                        ],
+                      ),
+                      child: const Center(
+                        child: Text(
+                          'S',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Text(
+                                'Sarah Johnson',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.green.shade100,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.green.shade300),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.verified_rounded,
+                                      size: 12,
+                                      color: Colors.green.shade700,
+                                    ),
+                                    const SizedBox(width: 2),
+                                    Text(
+                                      'Verified',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.green.shade700,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Row(
+                                children: List.generate(5, (index) {
+                                  return Icon(
+                                    Icons.star_rounded,
+                                    color: Colors.amber.shade600,
+                                    size: 16,
+                                  );
+                                }),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                '2 days ago',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Quick actions
+                    Row(
+                      children: [
+                        IconButton(
+                          onPressed: () {},
+                          icon: Icon(
+                            Icons.thumb_up_outlined,
+                            size: 18,
+                            color: Colors.grey.shade600,
+                          ),
+                          constraints: const BoxConstraints(),
+                          padding: EdgeInsets.zero,
+                        ),
+                        Text(
+                          '24',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                
+                const SizedBox(height: 12),
+                
+                // Review Text
+                Text(
+                  'Amazing event! The music was absolutely fantastic and the venue was perfect. The organizers did an incredible job with everything from sound quality to crowd management. Would definitely attend again! 🎵✨',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey.shade700,
+                    height: 1.4,
+                  ),
+                ),
+                
+                const SizedBox(height: 12),
+                
+                // View More Button
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const PostEventReviewScreen(
+                          eventTitle: 'Summer Music Festival 2024',
+                          eventId: 'event_123',
+                          hasUserReviewed: true,
+                        ),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Read more reviews',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade700,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: 12,
+                          color: Colors.grey.shade700,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String text, {bool isClickable = false}) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: isClickable ? Colors.deepPurple : Colors.grey),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(
+              fontSize: 16,
+              color: isClickable ? Colors.deepPurple : Colors.grey,
+              decoration: isClickable ? TextDecoration.underline : null,
+            ),
+          ),
+        ),
+        if (isClickable) const Icon(Icons.open_in_new, size: 16, color: Colors.deepPurple),
+      ],
+    );
+  }
+
+  String _getMainActionText() {
+    if (selectedPassType == 'Free RSVP') {
+      return isRSVPd ? 'RSVP Confirmed ✓' : 'RSVP Now';
+    } else if (selectedPassType.isNotEmpty) {
+      return 'Buy Tickets';
+    }
+    return 'Select Pass Type';
+  }
+
+  void _handleMainAction() {
+    if (selectedPassType == 'Free RSVP') {
+      setState(() {
+        isRSVPd = !isRSVPd;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(isRSVPd ? 'RSVP Confirmed!' : 'RSVP Cancelled'),
+          backgroundColor: isRSVPd ? Colors.green : Colors.orange,
+        ),
+      );
+    } else if (selectedPassType.isNotEmpty) {
+      // Handle ticket purchase
+      _showTicketPurchase();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a pass type')),
+      );
+    }
+  }
+
+  void _showLocationMap() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Event Location'),
+        content: Container(
+          height: 200,
+          child: Column(
+            children: [
+              Container(
+                height: 150,
+                color: Colors.grey[300],
+                child: const Center(
+                  child: Text('Map View\nMadison Square Garden\nNew York, NY'),
+                ),
+              ),
+              const SizedBox(height: 10),
+              const Text('Madison Square Garden, New York'),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+          TextButton(
+            onPressed: () {},
+            child: const Text('Get Directions'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showComments() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        builder: (context, scrollController) => Container(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              const Text(
+                'Comments',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: ListView.builder(
+                  controller: scrollController,
+                  itemCount: 5,
+                  itemBuilder: (context, index) => ListTile(
+                    leading: CircleAvatar(child: Text('U${index + 1}')),
+                    title: Text('User ${index + 1}'),
+                    subtitle: const Text('Great event! Looking forward to it.'),
+                    trailing: const Text('2h'),
+                  ),
+                ),
+              ),
+              TextField(
+                decoration: InputDecoration(
+                  hintText: 'Add a comment...',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(25)),
+                  suffixIcon: const Icon(Icons.send),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showShareOptions() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Share Event', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildShareOption(Icons.message, 'Message'),
+                _buildShareOption(Icons.email, 'Email'),
+                _buildShareOption(Icons.copy, 'Copy Link'),
+                _buildShareOption(Icons.more_horiz, 'More'),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildShareOption(IconData icon, String label) {
+    return Column(
+      children: [
+        CircleAvatar(
+          radius: 25,
+          backgroundColor: Colors.grey.shade200,
+          child: Icon(icon, color: Colors.grey.shade700),
+        ),
+        const SizedBox(height: 8),
+        Text(label, style: const TextStyle(fontSize: 12)),
+      ],
+    );
+  }
+
+  void _showTicketPurchase() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Purchase $selectedPassType'),
+        content: const Text('Redirecting to payment gateway...'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // Handle payment
+            },
+            child: const Text('Continue'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildJoinChatButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const EventQNAScreen(
+                eventTitle: 'Summer Music Festival 2024',
+                isChatEnabled: true,
+                isQAEnabled: true,
+              ),
+            ),
+          );
+        },
+        icon: const Icon(Icons.chat_bubble_outline),
+        label: const Text('Join Event Chat'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.deepPurple,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
       ),
     );
   }
