@@ -101,44 +101,17 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     // Mock authentication - In real app, call your authentication API
     bool isAuthenticated = _mockAuthenticate();
 
-    setState(() => _isLoading = false);
-
-    if (isAuthenticated) {
-
-      // Navigate based on user role
-      if (_selectedRole == UserRole.admin) {
-        // Admin goes to dashboard
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (context) => const AdminDashboardScreen(),
-          ),
-        );
-      } else {
-        // Regular users and organizers go to onboarding or main app
-        bool needsOnboarding = true; // Mock - check user's onboarding status
-        
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (context) => needsOnboarding 
-                ? const OnBoardingScreen()
-                : const MyHomePage(title: 'Event Management'),
-          ),
-        );
-      }
-
+    setState(() => _isLoading = false);    if (isAuthenticated) {
       // Navigate based on selected role
       Widget destinationPage;
-      
-      switch (_selectedRole!) {
+        switch (_selectedRole!) {
         case UserRole.organizer:
           destinationPage = const OrganizerDashboard();
           break;
         case UserRole.admin:
-          // Navigate to admin panel (create admin dashboard later)
-          destinationPage = const MyHomePage(title: 'Admin Panel');
+          destinationPage = const AdminDashboardScreen();
           break;
         case UserRole.user:
-        default:
           // Check if user needs onboarding (in real app, check from user profile)
           bool needsOnboarding = true; // Mock - check user's onboarding status
           destinationPage = needsOnboarding 
