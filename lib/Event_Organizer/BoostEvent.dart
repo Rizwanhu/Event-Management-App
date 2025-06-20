@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_stripe/flutter_stripe.dart';
+import 'package:flutter_stripe/flutter_stripe.dart' as stripe;
 
 class BoostEventScreen extends StatefulWidget {
   final String eventId;
@@ -444,10 +444,9 @@ class _BoostEventScreenState extends State<BoostEventScreen> {
     
     try {
       final tierData = promotionTiers[selectedTier]!;
-      
-      // Initialize payment sheet
-      await Stripe.instance.initPaymentSheet(
-        paymentSheetParameters: SetupPaymentSheetParameters(
+        // Initialize payment sheet
+      await stripe.Stripe.instance.initPaymentSheet(
+        paymentSheetParameters: stripe.SetupPaymentSheetParameters(
           paymentIntentClientSecret: await _createPaymentIntent(tierData['price']),
           merchantDisplayName: 'Event Management App',
           style: ThemeMode.system,
@@ -455,7 +454,7 @@ class _BoostEventScreenState extends State<BoostEventScreen> {
       );
 
       // Present payment sheet
-      await Stripe.instance.presentPaymentSheet();
+      await stripe.Stripe.instance.presentPaymentSheet();
       
       // Payment successful
       _showSuccessDialog();
