@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'BoostEvent.dart';
 
 class OrganizerDashboard extends StatefulWidget {
   const OrganizerDashboard({super.key});
@@ -1211,13 +1212,16 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
       ),
     );
   }
-
   // Navigation to Boost Event page or dialog
   void _navigateToBoostEvent() {
-    Navigator.pop(context); // Close drawer if open
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => BoostEventPage()),
+      MaterialPageRoute(
+        builder: (context) => BoostEventScreen(
+          eventId: '1', // TODO: Pass actual event ID
+          eventTitle: 'Summer Music Festival 2024', // TODO: Pass actual event title
+        ),
+      ),
     );
   }
 
@@ -1242,6 +1246,35 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
       default:
         break;
     }
+  }
+
+  // Navigate to Analytics tab
+  void _navigateToAnalytics() {
+    _tabController.animateTo(2);
+  }
+
+  // Navigate to Report (placeholder implementation)
+  void _navigateToReport() {
+    // TODO: Implement navigation to report screen
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Navigate to Report')),
+    );
+  }
+
+  // Navigate to Managers (placeholder implementation)
+  void _navigateToManagers() {
+    // TODO: Implement navigation to managers screen
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Navigate to Managers')),
+    );
+  }
+
+  // Navigate to Management (placeholder implementation)
+  void _navigateToManagement() {
+    // TODO: Implement navigation to management screen
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Navigate to Management')),
+    );
   }
 
   @override
