@@ -6,7 +6,7 @@ class AnalyticsDashboard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final stats = [
-      {'label': 'Total Events', 'value': '120', 'icon': Icons.event},
+      {'label': 'Total Events', 'value': '70', 'icon': Icons.event},
       {'label': 'Boost Revenue', 'value': '\$3200', 'icon': Icons.monetization_on},
       {'label': 'Active Users', 'value': '580', 'icon': Icons.people},
       {'label': 'Reports', 'value': '12', 'icon': Icons.report},
@@ -27,7 +27,8 @@ class AnalyticsDashboard extends StatelessWidget {
           final stat = stats[index];
           return Card(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            elevation: 3,
+            elevation: 7,
+            color: const Color.fromARGB(255, 115, 224, 224),
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
