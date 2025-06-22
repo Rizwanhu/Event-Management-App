@@ -1,0 +1,152 @@
+class SearchScreenData {
+  // Demo data - In a real app, this would come from an API or database
+  static final List<Map<String, dynamic>> allEvents = [
+    {
+      'id': '1',
+      'title': 'Jazz Night at Blue Note',
+      'category': 'Music & Concerts',
+      'location': 'New York, NY',
+      'date': DateTime.now().add(const Duration(days: 5)),
+      'price': 75.0,
+      'image': 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400',
+      'organizer': 'Blue Note Club',
+      'attendees': 120,
+      'rating': 4.8,
+      'description': 'An evening of smooth jazz with renowned artists.',
+    },
+    {
+      'id': '2',
+      'title': 'Tech Conference 2024',
+      'category': 'Technology',
+      'location': 'San Francisco, CA',
+      'date': DateTime.now().add(const Duration(days: 12)),
+      'price': 299.0,
+      'image': 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400',
+      'organizer': 'TechCorp',
+      'attendees': 500,
+      'rating': 4.9,
+      'description': 'Latest trends in technology and innovation.',
+    },
+    {
+      'id': '3',
+      'title': 'Food Festival Downtown',
+      'category': 'Food & Dining',
+      'location': 'Chicago, IL',
+      'date': DateTime.now().add(const Duration(days: 8)),
+      'price': 45.0,
+      'image': 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400',
+      'organizer': 'Downtown Association',
+      'attendees': 300,
+      'rating': 4.6,
+      'description': 'Taste the best food from local restaurants.',
+    },
+    {
+      'id': '4',
+      'title': 'Art Gallery Opening',
+      'category': 'Art & Culture',
+      'location': 'Los Angeles, CA',
+      'date': DateTime.now().add(const Duration(days: 3)),
+      'price': 25.0,
+      'image': 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400',
+      'organizer': 'Modern Art Gallery',
+      'attendees': 150,
+      'rating': 4.7,
+      'description': 'Contemporary art exhibition featuring local artists.',
+    },
+    {
+      'id': '5',
+      'title': 'Marathon Training Session',
+      'category': 'Sports & Fitness',
+      'location': 'Boston, MA',
+      'date': DateTime.now().add(const Duration(days: 1)),
+      'price': 0.0,
+      'image': 'https://images.unsplash.com/photo-1544717297-fa95b6ee9643?w=400',
+      'organizer': 'Boston Runners Club',
+      'attendees': 80,
+      'rating': 4.5,
+      'description': 'Prepare for the upcoming marathon with professional trainers.',
+    },
+    {
+      'id': '6',
+      'title': 'Business Networking Event',
+      'category': 'Business',
+      'location': 'New York, NY',
+      'date': DateTime.now().add(const Duration(days: 15)),
+      'price': 120.0,
+      'image': 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?w=400',
+      'organizer': 'Business Leaders NYC',
+      'attendees': 200,
+      'rating': 4.4,
+      'description': 'Connect with industry professionals and expand your network.',
+    },
+    {
+      'id': '7',
+      'title': 'Photography Workshop',
+      'category': 'Photography',
+      'location': 'Seattle, WA',
+      'date': DateTime.now().add(const Duration(days: 7)),
+      'price': 85.0,
+      'image': 'https://images.unsplash.com/photo-1606983340126-99ab4feaa64a?w=400',
+      'organizer': 'Photo Masters',
+      'attendees': 25,
+      'rating': 4.9,
+      'description': 'Learn advanced photography techniques from professionals.',
+    },
+    {
+      'id': '8',
+      'title': 'Yoga Retreat Weekend',
+      'category': 'Health & Wellness',
+      'location': 'Austin, TX',
+      'date': DateTime.now().add(const Duration(days: 20)),
+      'price': 150.0,
+      'image': 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400',
+      'organizer': 'Zen Studios',
+      'attendees': 40,
+      'rating': 4.8,
+      'description': 'Relax and rejuvenate with meditation and yoga.',
+    },
+  ];
+  static const List<String> locations = [
+    'All Locations',
+    'New York, NY',
+    'Los Angeles, CA',
+    'Chicago, IL',
+    'San Francisco, CA',
+    'Boston, MA',
+    'Austin, TX',
+    'Seattle, WA',
+    'Miami, FL',
+  ];
+
+  static const List<String> sortOptions = [
+    'relevance',
+    'date_asc',
+    'date_desc',
+    'price_asc',
+    'price_desc',
+    'rating',
+    'popularity',
+  ];
+
+
+  static const List<String> categories = [
+    'All Categories',
+    'Music & Concerts',
+    'Technology',
+    'Food & Dining',
+    'Art & Culture',
+    'Sports & Fitness',
+    'Business',
+    'Health & Wellness',
+    'Education',
+    'Photography',
+    'Travel',
+  ];
+
+
+
+
+
+
+
+}

@@ -5,7 +5,6 @@ import 'OnBoardingScreen.dart';
 import 'Admin/dashboard_screen.dart';
 import 'Event_Organizer/Dashboard.dart';
 
-
 enum UserRole { user, organizer, admin }
 
 class LoginPage extends StatefulWidget {
