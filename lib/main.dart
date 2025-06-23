@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'User/search_screen.dart';
-import 'User/event_detail_page.dart';
+import 'User/Event/event_detail_page.dart';
 import 'User/promote_event_page.dart';
 import 'User/ProfileScreen.dart';
 import 'SplashScreen.dart';
@@ -40,7 +40,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   final List<Widget> _pages = [
     const SearchScreen(), // Direct search screen as home page
-    const EventDetailPage(),
+    // const EventDetailPage(),
     const PromoteEventPage(),
     const ProfileScreen(),
   ];
@@ -62,10 +62,10 @@ class _MyHomePageState extends State<MyHomePage> {
             icon: Icon(Icons.home),
             label: 'Home',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.event),
-            label: 'Event',
-          ),
+          // BottomNavigationBarItem(
+          //   icon: Icon(Icons.event),
+          //   label: 'Event',
+          // ),
           BottomNavigationBarItem(
             icon: Icon(Icons.trending_up),
             label: 'Promote',

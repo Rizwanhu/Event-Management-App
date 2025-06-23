@@ -1,311 +1,117 @@
 import 'package:flutter/material.dart';
-import 'EventQNAScreen.dart';
-import 'PostEventReviewScreen.dart';
+import '../EventQNAScreen.dart';
+import '../PostEventReviewScreen.dart';
 
-class EventDetailPage extends StatefulWidget {
-  const EventDetailPage({super.key});
+class EventMediaSection extends StatelessWidget {
+  final String imageUrl;
 
-  @override
-  State<EventDetailPage> createState() => _EventDetailPageState();
-}
-
-class _EventDetailPageState extends State<EventDetailPage> {
-  bool isLiked = false;
-  bool isRSVPd = false;
-  int likeCount = 245;
-  int commentCount = 42;
-  String selectedPassType = '';
-  bool isEventPast = true; // Mock: Event has already happened
-  bool hasUserAttended = true; // Mock: User attended the event
-  bool hasUserReviewed = false; // Mock: User hasn't reviewed yet
+  const EventMediaSection({
+    Key? key,
+    required this.imageUrl,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.share, color: Colors.black),
-            onPressed: () => _showShareOptions(),
+    return Stack(
+      children: [
+        Container(
+          width: double.infinity,
+          height: 240,
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: NetworkImage(imageUrl),
+              fit: BoxFit.cover,
+            ),
           ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Column(
+        ),
+        Positioned(
+          bottom: 0,
+          left: 0,
+          right: 0,
+          child: Container(
+            height: 80,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.transparent, Colors.black.withOpacity(0.7)],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class EventOrganizerSection extends StatelessWidget {
+  final String organizerName;
+  final String organizerImage;
+
+  const EventOrganizerSection({
+    Key? key,
+    required this.organizerName,
+    required this.organizerImage,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        CircleAvatar(
+          radius: 24,
+          backgroundImage: NetworkImage(organizerImage),
+        ),
+        const SizedBox(width: 12),
+        Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Event Banner/Media Section
-            _buildMediaSection(),
-            
-            // Event Details
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Event Title
-                  const Text(
-                    'Summer Music Festival 2024',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  
-                  // Event Info
-                  _buildInfoRow(Icons.calendar_today, 'December 25, 2024 • 7:00 PM'),
-                  const SizedBox(height: 8),
-                  GestureDetector(
-                    onTap: () => _showLocationMap(),
-                    child: _buildInfoRow(Icons.location_on, 'Madison Square Garden, New York', isClickable: true),
-                  ),
-                  const SizedBox(height: 20),
-                  
-                  // Organizer Section
-                  _buildOrganizerSection(),
-                  const SizedBox(height: 20),
-                  
-                  // Description
-                  const Text(
-                    'Description',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Join us for an unforgettable evening of live music featuring top artists from around the world. Experience the magic of live performances in one of the most iconic venues in New York City.',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey,
-                      height: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  
-                  // Pass Types Section
-                  const Text(
-                    'Pass Types',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildPassTypeCard('Free RSVP', 'Free', 'General access to the event', true),
-                  const SizedBox(height: 8),
-                  _buildPassTypeCard('General Admission', '\$75', 'Access to main floor', false),
-                  const SizedBox(height: 8),
-                  _buildPassTypeCard('VIP Package', '\$150', 'Premium seating + backstage access', false),
-                  const SizedBox(height: 20),
-                  
-                  // Social Actions
-                  _buildSocialActions(),
-                  const SizedBox(height: 20),
-                  
-                  // Q&A and Chat Section
-                  _buildQAChatSection(),
-                  const SizedBox(height: 20),
-                  
-                  // Reviews Section (for past events)
-                  if (isEventPast) _buildReviewsSection(),
-                  if (isEventPast) const SizedBox(height: 20),
-                  
-                  // Join Chat Button (shown only if RSVP'd)
-                  if (isRSVPd) _buildJoinChatButton(),
-                  const SizedBox(height: 30),
-                ],
-              ),
+            const Text(
+              'Organized by',
+              style: TextStyle(fontSize: 14, color: Colors.grey),
             ),
-          ],
-        ),
-      ),
-      
-      // Bottom Action Button
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.3),
-              spreadRadius: 1,
-              blurRadius: 10,
-              offset: const Offset(0, -5),
-            ),
-          ],
-        ),
-        child: SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: () => _handleMainAction(),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: selectedPassType == 'Free RSVP' ? Colors.green : Colors.deepPurple,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: Text(
-              _getMainActionText(),
+            Text(
+              organizerName,
               style: const TextStyle(
-                fontSize: 18,
+                fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
             ),
-          ),
+          ],
         ),
-      ),
+        const Spacer(),
+        TextButton(
+          onPressed: () {},
+          child: const Text('Follow'),
+        ),
+      ],
     );
   }
+}
 
-  Widget _buildMediaSection() {
-    return Container(
-      height: 250,
-      child: PageView(
-        children: [
-          // Main Banner
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
-            ),
-            child: Stack(
-              children: [
-                const Center(
-                  child: Icon(Icons.image, size: 80, color: Colors.grey),
-                ),
-                // Boosted Badge
-                Positioned(
-                  top: 20,
-                  right: 20,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.orange,
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    child: const Text(
-                      'Boosted',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-                // Media indicator
-                Positioned(
-                  bottom: 20,
-                  left: 20,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.black54,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Text(
-                      '1/3',
-                      style: TextStyle(color: Colors.white, fontSize: 12),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Promo Video Placeholder
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.black87,
-              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
-            ),
-            child: const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.play_circle_fill, size: 80, color: Colors.white),
-                  SizedBox(height: 8),
-                  Text(
-                    'Promo Video',
-                    style: TextStyle(color: Colors.white, fontSize: 16),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+class EventPassTypeCard extends StatelessWidget {
+  final String title;
+  final String price;
+  final String description;
+  final bool isFree;
+  final bool isSelected;
+  final Function(String) onSelect;
 
-  Widget _buildOrganizerSection() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 25,
-            backgroundColor: Colors.deepPurple,
-            child: const Text(
-              'ME',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'MusicEvents Inc.',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Event Organizer • 4.8⭐ (120 reviews)',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          TextButton(
-            onPressed: () {},
-            child: const Text('Follow'),
-          ),
-        ],
-      ),
-    );
-  }
+  const EventPassTypeCard({
+    Key? key,
+    required this.title,
+    required this.price,
+    required this.description,
+    required this.isFree,
+    required this.isSelected,
+    required this.onSelect,
+  }) : super(key: key);
 
-  Widget _buildPassTypeCard(String title, String price, String description, bool isFree) {
-    bool isSelected = selectedPassType == title;
-    
+  @override
+  Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        setState(() {
-          selectedPassType = isSelected ? '' : title;
-        });
+        onSelect(isSelected ? '' : title);
       },
       child: Container(
         padding: const EdgeInsets.all(16),
@@ -321,11 +127,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
           children: [
             Radio<String>(
               value: title,
-              groupValue: selectedPassType,
+              groupValue: isSelected ? title : '',
               onChanged: (value) {
-                setState(() {
-                  selectedPassType = value ?? '';
-                });
+                onSelect(value ?? '');
               },
             ),
             Expanded(
@@ -385,18 +189,33 @@ class _EventDetailPageState extends State<EventDetailPage> {
       ),
     );
   }
+}
 
-  Widget _buildSocialActions() {
+class EventSocialActions extends StatelessWidget {
+  final bool isLiked;
+  final int likeCount;
+  final int commentCount;
+  final Function() onLikePressed;
+  final Function() onCommentPressed;
+  final Function() onSharePressed;
+
+  const EventSocialActions({
+    Key? key,
+    required this.isLiked,
+    required this.likeCount,
+    required this.commentCount,
+    required this.onLikePressed,
+    required this.onCommentPressed,
+    required this.onSharePressed,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
     return Row(
       children: [
         // Like Button
         GestureDetector(
-          onTap: () {
-            setState(() {
-              isLiked = !isLiked;
-              likeCount += isLiked ? 1 : -1;
-            });
-          },
+          onTap: onLikePressed,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
@@ -430,7 +249,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
         
         // Comment Button
         GestureDetector(
-          onTap: () => _showComments(),
+          onTap: onCommentPressed,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
@@ -458,14 +277,19 @@ class _EventDetailPageState extends State<EventDetailPage> {
         
         // Share Button
         IconButton(
-          onPressed: () => _showShareOptions(),
+          onPressed: onSharePressed,
           icon: const Icon(Icons.share_outlined, color: Colors.grey),
         ),
       ],
     );
   }
+}
 
-  Widget _buildQAChatSection() {
+class EventQAChatSection extends StatelessWidget {
+  const EventQAChatSection({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -587,8 +411,20 @@ class _EventDetailPageState extends State<EventDetailPage> {
       ),
     );
   }
+}
 
-  Widget _buildReviewsSection() {
+class EventReviewsSection extends StatelessWidget {
+  final bool hasUserAttended;
+  final bool hasUserReviewed;
+
+  const EventReviewsSection({
+    Key? key,
+    required this.hasUserAttended,
+    required this.hasUserReviewed,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -828,7 +664,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 const SizedBox(height: 20),
                 
                 // Featured Review Preview
-                _buildFeaturedReviewPreview(),
+                _buildFeaturedReviewPreview(context),
               ],
             ),
           ),
@@ -895,7 +731,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
     );
   }
 
-  Widget _buildFeaturedReviewPreview() {
+  Widget _buildFeaturedReviewPreview(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -1141,196 +977,46 @@ class _EventDetailPageState extends State<EventDetailPage> {
       ),
     );
   }
+}
 
-  Widget _buildInfoRow(IconData icon, String text, {bool isClickable = false}) {
+class EventInfoRow extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final bool isClickable;
+
+  const EventInfoRow({
+    Key? key,
+    required this.icon,
+    required this.text,
+    this.isClickable = false,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 20, color: isClickable ? Colors.deepPurple : Colors.grey),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            text,
-            style: TextStyle(
-              fontSize: 16,
-              color: isClickable ? Colors.deepPurple : Colors.grey,
-              decoration: isClickable ? TextDecoration.underline : null,
-            ),
+        Icon(icon, size: 20, color: Colors.grey[600]),
+        const SizedBox(width: 10),
+        Text(
+          text,
+          style: TextStyle(
+            fontSize: 16,
+            color: isClickable ? Colors.blue : Colors.grey[800],
+            decoration: isClickable ? TextDecoration.underline : null,
           ),
         ),
-        if (isClickable) const Icon(Icons.open_in_new, size: 16, color: Colors.deepPurple),
+        if (isClickable)
+          const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.blue),
       ],
     );
   }
+}
 
-  String _getMainActionText() {
-    if (selectedPassType == 'Free RSVP') {
-      return isRSVPd ? 'RSVP Confirmed ✓' : 'RSVP Now';
-    } else if (selectedPassType.isNotEmpty) {
-      return 'Buy Tickets';
-    }
-    return 'Select Pass Type';
-  }
+class EventJoinChatButton extends StatelessWidget {
+  const EventJoinChatButton({Key? key}) : super(key: key);
 
-  void _handleMainAction() {
-    if (selectedPassType == 'Free RSVP') {
-      setState(() {
-        isRSVPd = !isRSVPd;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(isRSVPd ? 'RSVP Confirmed!' : 'RSVP Cancelled'),
-          backgroundColor: isRSVPd ? Colors.green : Colors.orange,
-        ),
-      );
-    } else if (selectedPassType.isNotEmpty) {
-      // Handle ticket purchase
-      _showTicketPurchase();
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a pass type')),
-      );
-    }
-  }
-
-  void _showLocationMap() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Event Location'),
-        content: Container(
-          height: 200,
-          child: Column(
-            children: [
-              Container(
-                height: 150,
-                color: Colors.grey[300],
-                child: const Center(
-                  child: Text('Map View\nMadison Square Garden\nNew York, NY'),
-                ),
-              ),
-              const SizedBox(height: 10),
-              const Text('Madison Square Garden, New York'),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-          TextButton(
-            onPressed: () {},
-            child: const Text('Get Directions'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showComments() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        builder: (context, scrollController) => Container(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              const Text(
-                'Comments',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: ListView.builder(
-                  controller: scrollController,
-                  itemCount: 5,
-                  itemBuilder: (context, index) => ListTile(
-                    leading: CircleAvatar(child: Text('U${index + 1}')),
-                    title: Text('User ${index + 1}'),
-                    subtitle: const Text('Great event! Looking forward to it.'),
-                    trailing: const Text('2h'),
-                  ),
-                ),
-              ),
-              TextField(
-                decoration: InputDecoration(
-                  hintText: 'Add a comment...',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(25)),
-                  suffixIcon: const Icon(Icons.send),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showShareOptions() {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Share Event', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildShareOption(Icons.message, 'Message'),
-                _buildShareOption(Icons.email, 'Email'),
-                _buildShareOption(Icons.copy, 'Copy Link'),
-                _buildShareOption(Icons.more_horiz, 'More'),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildShareOption(IconData icon, String label) {
-    return Column(
-      children: [
-        CircleAvatar(
-          radius: 25,
-          backgroundColor: Colors.grey.shade200,
-          child: Icon(icon, color: Colors.grey.shade700),
-        ),
-        const SizedBox(height: 8),
-        Text(label, style: const TextStyle(fontSize: 12)),
-      ],
-    );
-  }
-
-  void _showTicketPurchase() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Purchase $selectedPassType'),
-        content: const Text('Redirecting to payment gateway...'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // Handle payment
-            },
-            child: const Text('Continue'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildJoinChatButton() {
+  @override
+  Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton.icon(
@@ -1357,6 +1043,31 @@ class _EventDetailPageState extends State<EventDetailPage> {
           ),
         ),
       ),
+    );  }
+}
+
+class ShareOptionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const ShareOptionButton({
+    Key? key,
+    required this.icon,
+    required this.label,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        CircleAvatar(
+          radius: 25,
+          backgroundColor: Colors.grey.shade200,
+          child: Icon(icon, color: Colors.grey.shade700),
+        ),
+        const SizedBox(height: 8),
+        Text(label, style: const TextStyle(fontSize: 12)),
+      ],
     );
   }
 }

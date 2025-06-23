@@ -4,7 +4,7 @@ import 'event_moderation_screen.dart';
 import 'boost_management_screen.dart';
 import 'report_block_screen.dart';
 import 'user_management_screen.dart';
-import '../User/comments_page.dart';
+import '../User/Event/comments_page.dart';
 import '/../Event_Organizer/EventAnalytics.dart';
 
 class AdminDashboardScreen extends StatelessWidget {

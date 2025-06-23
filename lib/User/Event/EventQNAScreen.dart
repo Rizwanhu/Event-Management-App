@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'models/chat_message.dart';
+import 'models/qa_item.dart';
+// import 'screens/chat_tab.dart';
+// import 'screens/qa_tab.dart';
 
 class EventQNAScreen extends StatefulWidget {
   final String eventTitle;
@@ -680,65 +684,5 @@ class _EventQNAScreenState extends State<EventQNAScreen>
     _questionController.dispose();
     _chatScrollController.dispose();
     super.dispose();
-  }
-}
-
-class ChatMessage {
-  final String id;
-  final String userName;
-  final String message;
-  final DateTime timestamp;
-  final bool isOrganizer;
-
-  ChatMessage({
-    required this.id,
-    required this.userName,
-    required this.message,
-    required this.timestamp,
-    required this.isOrganizer,
-  });
-}
-
-class QAItem {
-  final String id;
-  final String question;
-  final String askedBy;
-  final DateTime askedAt;
-  final String? answer;
-  final String? answeredBy;
-  final DateTime? answeredAt;
-  final int upvotes;
-
-  QAItem({
-    required this.id,
-    required this.question,
-    required this.askedBy,
-    required this.askedAt,
-    this.answer,
-    this.answeredBy,
-    this.answeredAt,
-    required this.upvotes,
-  });
-
-  QAItem copyWith({
-    String? id,
-    String? question,
-    String? askedBy,
-    DateTime? askedAt,
-    String? answer,
-    String? answeredBy,
-    DateTime? answeredAt,
-    int? upvotes,
-  }) {
-    return QAItem(
-      id: id ?? this.id,
-      question: question ?? this.question,
-      askedBy: askedBy ?? this.askedBy,
-      askedAt: askedAt ?? this.askedAt,
-      answer: answer ?? this.answer,
-      answeredBy: answeredBy ?? this.answeredBy,
-      answeredAt: answeredAt ?? this.answeredAt,
-      upvotes: upvotes ?? this.upvotes,
-    );
   }
 }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../data/search_screen_data.dart';
+import './Event/event_detail_page.dart'; // Import the EventDetailPage
+import './Event/models/event.dart'; // Import the Event model
 
 class SearchScreenWidgets {
   
@@ -56,8 +58,7 @@ class SearchScreenWidgets {
             blurRadius: 5,
             offset: const Offset(0, 2),
           ),
-        ],
-      ),
+        ],      ),
       child: Column(
         children: suggestions.map((suggestion) {
           return ListTile(
@@ -290,134 +291,189 @@ class SearchScreenWidgets {
     );
   }
 
+  static Event _mapToEvent(Map<String, dynamic> eventMap) {
+    // Convert pass types data
+    List<EventPassType> passTypes = [];
+    if (eventMap['price'] == 0) {
+      passTypes.add(
+        EventPassType(
+          title: 'Free RSVP',
+          price: 'Free',
+          description: 'General access to the event',
+          isFree: true,
+        ),
+      );
+    } else {
+      passTypes.add(
+        EventPassType(
+          title: 'General Admission',
+          price: '\$${eventMap['price']}',
+          description: 'Access to all areas',
+          isFree: false,
+        ),
+      );
+    }
+
+    // Create and return the Event object
+    return Event(
+      id: eventMap['id']?.toString() ?? '1',
+      title: eventMap['title'] ?? 'Event Title',
+      description: eventMap['description'] ?? 'No description available',
+      date: eventMap['date'] != null 
+          ? '${eventMap['date'].day}/${eventMap['date'].month}/${eventMap['date'].year}'
+          : 'Date TBD',
+      time: eventMap['time'] ?? '7:00 PM',
+      location: eventMap['location'] ?? 'Location TBD',
+      organizer: eventMap['organizer'] ?? 'Event Organizer',
+      organizerImage: 'https://randomuser.me/api/portraits/men/32.jpg', // Default image
+      bannerImage: eventMap['image'] ?? 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3',
+      isPast: false, // Default to upcoming event
+      passTypes: passTypes,
+      likeCount: eventMap['likes'] ?? 0,
+      commentCount: eventMap['comments'] ?? 0,
+    );
+  }
+
   static Widget _buildEventCard(Map<String, dynamic> event) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
+    return Builder(
+      builder: (context) => InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => EventDetailPage(event: _mapToEvent(event)),
+            ),
+          );
+        },
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 5,
-            offset: const Offset(0, 2),
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.1),
+                blurRadius: 5,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-            child: Image.network(
-              event['image'],
-              height: 150,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                child: Image.network(
+                  event['image'],
                   height: 150,
-                  color: Colors.grey[300],
-                  child: const Icon(Icons.image, size: 50),
-                );
-              },
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      height: 150,
+                      color: Colors.grey[300],
+                      child: const Icon(Icons.image, size: 50),
+                    );
+                  },
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Text(
-                        event['title'],
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            event['title'],
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.deepPurple.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        event['price'] == 0 ? 'Free' : '\$${event['price']}',
-                        style: const TextStyle(
-                          color: Colors.deepPurple,
-                          fontWeight: FontWeight.bold,
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.deepPurple.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            event['price'] == 0 ? 'Free' : '\$${event['price']}',
+                            style: const TextStyle(
+                              color: Colors.deepPurple,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            event['category'],
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                        const Spacer(),
+                        const Icon(Icons.star, color: Colors.amber, size: 16),
+                        Text(
+                          ' ${event['rating']}',
+                          style: const TextStyle(fontWeight: FontWeight.w500),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(Icons.location_on, size: 16, color: Colors.grey),
+                        const SizedBox(width: 4),
+                        Text(
+                          event['location'],
+                          style: TextStyle(color: Colors.grey[600]),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Icon(Icons.calendar_today, size: 16, color: Colors.grey),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${event['date'].day}/${event['date'].month}/${event['date'].year}',
+                          style: TextStyle(color: Colors.grey[600]),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '${event['attendees']} attending',
+                          style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                        ),
+                        Text(
+                          'by ${event['organizer']}',
+                          style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        event['category'],
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                    ),
-                    const Spacer(),
-                    const Icon(Icons.star, color: Colors.amber, size: 16),
-                    Text(
-                      ' ${event['rating']}',
-                      style: const TextStyle(fontWeight: FontWeight.w500),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Icon(Icons.location_on, size: 16, color: Colors.grey),
-                    const SizedBox(width: 4),
-                    Text(
-                      event['location'],
-                      style: TextStyle(color: Colors.grey[600]),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    const Icon(Icons.calendar_today, size: 16, color: Colors.grey),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${event['date'].day}/${event['date'].month}/${event['date'].year}',
-                      style: TextStyle(color: Colors.grey[600]),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      '${event['attendees']} attending',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                    ),
-                    Text(
-                      'by ${event['organizer']}',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+              ),            ],
           ),
-        ],
+        ),
       ),
     );
   }
