@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'search_screen_widgets.dart';
-import 'search_screen_data.dart';
+import '../data/search_screen_data.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});

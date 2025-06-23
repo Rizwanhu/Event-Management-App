@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'search_screen_data.dart';
+import '../data/search_screen_data.dart';
 
 class SearchScreenWidgets {
   

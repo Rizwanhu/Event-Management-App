@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'search_screen.dart';
-import 'event_detail_page.dart';
-import 'promote_event_page.dart';
-import 'ProfileScreen.dart';
+import 'User/search_screen.dart';
+import 'User/event_detail_page.dart';
+import 'User/promote_event_page.dart';
+import 'User/ProfileScreen.dart';
 import 'SplashScreen.dart';
 
 void main() {
