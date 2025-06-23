@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'BoostEvent.dart';
+import 'create_edit_event_screen.dart';
 
 class OrganizerDashboard extends StatefulWidget {
   const OrganizerDashboard({super.key});
@@ -14,7 +15,7 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
   int selectedNavIndex = 0;
 
   // Mock data
-  final List<Event> events = [
+   List<Event> events = [
     Event(
       id: '1',
       title: 'Summer Music Festival 2024',
@@ -344,6 +345,54 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
       ],
     );
   }
+  void _editEvent(Event event) {
+  // Convert Event object to Map format expected by CreateEditEventScreen
+  final eventData = {
+    'title': event.title,
+    'description': '', // You might want to add description field to Event class
+    'location': '', // You might want to add location field to Event class
+    'date': event.date,
+    'category': 'Conference', // Default or add to Event class
+    'tags': <String>[], // Add to Event class if needed
+    'isPaid': event.totalTickets > 0,
+    'price': event.totalTickets > 0 ? (event.revenue / event.ticketsSold).toStringAsFixed(2) : '',
+    'quantity': event.totalTickets,
+  };
+
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => CreateEditEventScreen(event: eventData),
+    ),
+  ).then((updatedEventData) {
+    if (updatedEventData != null) {
+      // Update the existing event
+      setState(() {
+        final index = events.indexWhere((e) => e.id == event.id);
+        if (index != -1) {
+          events[index] = Event(
+            id: event.id, // Keep same ID
+            title: updatedEventData['title'],
+            date: updatedEventData['date'],
+            status: event.status, // Keep current status
+            ticketsSold: event.ticketsSold, // Keep current sales
+            totalTickets: updatedEventData['isPaid'] ? (updatedEventData['quantity'] ?? 0) : 0,
+            revenue: event.revenue, // Keep current revenue
+            likes: event.likes,
+            comments: event.comments,
+            shares: event.shares,
+            rating: event.rating,
+            reviews: event.reviews,
+          );
+        }
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Event updated successfully!')),
+      );
+    }
+  });
+}
 
   Widget _buildAnalyticsTab() {
     return SingleChildScrollView(
@@ -804,7 +853,7 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                       const SizedBox(width: 12),
                       Expanded(
                         child: ElevatedButton.icon(
-                          onPressed: () {},
+                           onPressed: () => _editEvent(event),
                           icon: const Icon(Icons.edit, size: 16),
                           label: const Text('Edit', style: TextStyle(fontSize: 13)),
                           style: ElevatedButton.styleFrom(
@@ -1062,26 +1111,60 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
       ),
     );
   }
-
   void _showCreateEventDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Create New Event'),
-        content: const Text('Event creation form will be implemented here.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Create'),
-          ),
-        ],
-      ),
-    );
-  }
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => const CreateEditEventScreen(),
+    ),
+  ).then((eventData) {
+    if (eventData != null) {
+      // Create a new Event object from the returned data
+      final newEvent = Event(
+        id: DateTime.now().millisecondsSinceEpoch.toString(), // Generate unique ID
+        title: eventData['title'],
+        date: eventData['date'],
+        status: EventStatus.pending, // New events start as pending
+        ticketsSold: 0,
+        totalTickets: eventData['isPaid'] ? (eventData['quantity'] ?? 0) : 0,
+        revenue: 0.0,
+        likes: 0,
+        comments: 0,
+        shares: 0,
+        rating: 0.0,
+        reviews: 0,
+      );
+      
+      // Add to the events list and refresh UI
+      setState(() {
+        events.insert(0, newEvent); // Add at the beginning
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Event created successfully!')),
+      );
+    }
+  });
+}
+  // void _showCreateEventDialog() {
+  //   showDialog(
+  //     context: context,
+  //     builder: (context) => AlertDialog(
+  //       title: const Text('Create New Event'),
+  //       content: const Text('Event creation form will be implemented here.'),
+  //       actions: [
+  //         TextButton(
+  //           onPressed: () => Navigator.pop(context),
+  //           child: const Text('Cancel'),
+  //         ),
+  //         ElevatedButton(
+  //           onPressed: () => Navigator.pop(context),
+  //           child: const Text('Create'),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _buildEventStat(String title, String value, double? progress) {
     return Column(
