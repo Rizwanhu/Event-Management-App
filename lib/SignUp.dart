@@ -3,7 +3,7 @@ import 'Login.dart';
 import 'Event_Organizer/Dashboard.dart';
 import 'main.dart';
 import 'OnBoardingScreen.dart';
-
+//hello Rizwan .
 enum UserRole { user, organizer, admin }
 
 class SignUpPage extends StatefulWidget {
@@ -483,7 +483,7 @@ class _SignUpPageState extends State<SignUpPage> with TickerProviderStateMixin {
               Expanded(
                 child: Text(
                   'As a User, you can discover events, book tickets, and connect with other attendees.',
-                  style: TextStyle(color: Colors.blue, fontSize: 12),
+                  style: TextStyle(color: Colors.white, fontSize: 12),
                 ),
               ),
             ],
@@ -642,174 +642,173 @@ class _SignUpPageState extends State<SignUpPage> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.deepPurple),
-          onPressed: () => Navigator.pop(context),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.deepPurple,
+              Colors.deepPurpleAccent,
+            ],
+          ),
         ),
-        title: Text(
-          'Sign Up',
-          style: TextStyle(color: Colors.grey[800], fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-      ),
-      body: SafeArea(
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: Column(
-            children: [
-              // Progress Indicator
-              Container(
-                padding: const EdgeInsets.all(20),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: _currentStep >= 0 ? Colors.deepPurple : Colors.grey[300],
-                          borderRadius: BorderRadius.circular(2),
+        child: SafeArea(
+          child: FadeTransition(
+            opacity: _fadeAnimation,
+            child: Column(
+              children: [
+                // Progress Indicator
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: _currentStep >= 0 ? Colors.white : Colors.grey[300],
+                            borderRadius: BorderRadius.circular(2),
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Container(
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: _currentStep >= 1 ? Colors.deepPurple : Colors.grey[300],
-                          borderRadius: BorderRadius.circular(2),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Container(
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: _currentStep >= 1 ? Colors.white : Colors.grey[300],
+                            borderRadius: BorderRadius.circular(2),
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              
-              Expanded(
-                child: PageView(
-                  controller: _pageController,
-                  physics: const NeverScrollableScrollPhysics(),
-                  children: [
-                    // Step 1: Role Selection
-                    SingleChildScrollView(
-                      padding: const EdgeInsets.all(20),
-                      child: _buildRoleSelection(),
-                    ),
-                    
-                    // Step 2: Form Fields
-                    SingleChildScrollView(
-                      padding: const EdgeInsets.all(20),
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Create Your Account',
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey[800],
-                              ),
-                            ),
-                            const SizedBox(height: 30),
-                            _buildCommonFields(),
-                            _buildRoleSpecificFields(),
-                            const SizedBox(height: 20),
-                            
-                            // Terms and Conditions
-                            Row(
-                              children: [
-                                Checkbox(
-                                  value: _agreeToTerms,
-                                  onChanged: (value) => setState(() => _agreeToTerms = value!),
-                                  activeColor: Colors.deepPurple,
+                
+                Expanded(
+                  child: PageView(
+                    controller: _pageController,
+                    physics: const NeverScrollableScrollPhysics(),
+                    children: [
+                      // Step 1: Role Selection
+                      SingleChildScrollView(
+                        padding: const EdgeInsets.all(20),
+                        child: _buildRoleSelection(),
+                      ),
+                      
+                      // Step 2: Form Fields
+                      SingleChildScrollView(
+                        padding: const EdgeInsets.all(20),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Create Your Account',
+                                style: const TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
                                 ),
-                                Expanded(
-                                  child: RichText(
-                                    text: const TextSpan(
-                                      text: 'I agree to the ',
-                                      style: TextStyle(color: Colors.grey),
-                                      children: [
-                                        TextSpan(
-                                          text: 'Terms & Conditions',
-                                          style: TextStyle(
-                                            color: Colors.deepPurple,
-                                            fontWeight: FontWeight.bold,
+                              ),
+                              const SizedBox(height: 30),
+                              _buildCommonFields(),
+                              _buildRoleSpecificFields(),
+                              const SizedBox(height: 20),
+                              
+                              // Terms and Conditions
+                              Row(
+                                children: [
+                                  Checkbox(
+                                    value: _agreeToTerms,
+                                    onChanged: (value) => setState(() => _agreeToTerms = value!),
+                                    activeColor: Colors.deepPurple,
+                                  ),
+                                  Expanded(
+                                    child: RichText(
+                                      text: const TextSpan(
+                                        text: 'I agree to the ',
+                                        style: TextStyle(color: Colors.white),
+                                        children: [
+                                          TextSpan(
+                                            text: 'Terms & Conditions',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           ),
-                                        ),
-                                        TextSpan(text: ' and '),
-                                        TextSpan(
-                                          text: 'Privacy Policy',
-                                          style: TextStyle(
-                                            color: Colors.deepPurple,
-                                            fontWeight: FontWeight.bold,
+                                          TextSpan(text: ' and '),
+                                          TextSpan(
+                                            text: 'Privacy Policy',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           ),
-                                        ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ],
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              
-              // Navigation Buttons
-              Container(
-                padding: const EdgeInsets.all(20),
-                child: Row(
-                  children: [
-                    if (_currentStep > 0)
+                
+                // Navigation Buttons
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  child: Row(
+                    children: [
+                      if (_currentStep > 0)
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: _previousStep,
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 15),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                              side: const BorderSide(color: Colors.white),
+                            ),
+                            child: const Text('Previous', style: TextStyle(color: Colors.white)),
+                          ),
+                        ),
+                      if (_currentStep > 0) const SizedBox(width: 15),
                       Expanded(
-                        child: OutlinedButton(
-                          onPressed: _previousStep,
-                          style: OutlinedButton.styleFrom(
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : _nextStep,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: Colors.deepPurple,
                             padding: const EdgeInsets.symmetric(vertical: 15),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(15),
                             ),
+                            elevation: 5,
                           ),
-                          child: const Text('Previous'),
-                        ),
-                      ),
-                    if (_currentStep > 0) const SizedBox(width: 15),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _nextStep,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.deepPurple,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 15),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                          elevation: 5,
-                        ),
-                        child: _isLoading
-                            ? const CircularProgressIndicator(color: Colors.white)
-                            : Text(
-                                _currentStep == 0 ? 'Next' : 'Create Account',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
+                          child: _isLoading
+                              ? const CircularProgressIndicator(color: Colors.deepPurple)
+                              : Text(
+                                  _currentStep == 0 ? 'Next' : 'Create Account',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

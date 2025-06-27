@@ -116,7 +116,7 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: Colors.deepPurple,
+              color: Colors.white,
             ),
             textAlign: TextAlign.center,
           ),
@@ -125,7 +125,7 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
             'Let\'s personalize your experience by setting up your preferences. This will help us recommend events you\'ll love!',
             style: TextStyle(
               fontSize: 14,
-              color: Colors.grey[600],
+              color: Colors.white,
               height: 1.4,
             ),
             textAlign: TextAlign.center,
@@ -145,7 +145,7 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
                 Expanded(
                   child: Text(
                     'This will only take a few minutes and you can always change these settings later.',
-                    style: TextStyle(color: Colors.blue, fontSize: 12),
+                    style: TextStyle(color: Colors.white, fontSize: 12),
                   ),
                 ),
               ],
@@ -168,6 +168,7 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
+              color: Colors.white,
             ),
           ),
           const SizedBox(height: 8),
@@ -175,7 +176,7 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
             'Select at least 3 categories to get better recommendations',
             style: TextStyle(
               fontSize: 14,
-              color: Colors.grey[600],
+              color: Colors.white,
             ),
           ),
           const SizedBox(height: 20),
@@ -325,14 +326,16 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
+              color: Colors.white,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'Help us find events near you',
             style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[600],
+              fontSize: 16,
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 20),
@@ -453,19 +456,21 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Final Settings',
+          Text(
+            'Your Preferences',
             style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'Customize your experience',
             style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[600],
+              fontSize: 16,
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 20),
@@ -544,20 +549,40 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Your preferences:',
+                Text(
+                  'Your Preferences',
                   style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.deepPurple,
-                    fontSize: 14,
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text('• ${_selectedInterests.length} interests selected', style: const TextStyle(fontSize: 12)),
-                if (_selectedLocation != null) Text('• Location: $_selectedLocation', style: const TextStyle(fontSize: 12)),
-                if (_preferredLanguage != null) Text('• Language: $_preferredLanguage', style: const TextStyle(fontSize: 12)),
-                Text('• Search radius: ${_radiusPreference.round()} km', style: const TextStyle(fontSize: 12)),
-                Text('• Notifications: ${_receiveNotifications ? "Enabled" : "Disabled"}', style: const TextStyle(fontSize: 12)),
+                Container(
+                  decoration: BoxDecoration(
+                    color: _selectedInterests.isNotEmpty 
+                      ? Colors.white.withOpacity(0.2) 
+                      : Colors.transparent,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    'Selected: ${_selectedInterests.length}',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: _selectedInterests.isNotEmpty 
+                        ? FontWeight.bold 
+                        : FontWeight.normal,
+                    ),
+                  ),
+                ),
+                Text(
+                  'Search Radius: ${_radiusPreference.round()}km',
+                  style: TextStyle(color: Colors.white),
+                ),
+                Text(
+                  'Notifications: ${_receiveNotifications ? 'ON' : 'OFF'}',
+                  style: TextStyle(color: Colors.white),
+                ),
               ],
             ),
           ),
@@ -569,89 +594,78 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: _currentPage > 0 ? IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.deepPurple),
-          onPressed: _previousPage,
-        ) : null,
-        actions: [
-          TextButton(
-            onPressed: _completeOnboarding,
-            child: const Text(
-              'Skip',
-              style: TextStyle(color: Colors.grey),
-            ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF6A1B9A), Color(0xFF1565C0)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-        ],
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Progress Indicator
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                children: List.generate(4, (index) {
-                  return Expanded(
-                    child: Container(
-                      height: 4,
-                      margin: EdgeInsets.only(right: index < 3 ? 8 : 0),
-                      decoration: BoxDecoration(
-                        color: index <= _currentPage ? Colors.deepPurple : Colors.grey[300],
-                        borderRadius: BorderRadius.circular(2),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              // Progress Indicator
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  children: List.generate(4, (index) {
+                    return Expanded(
+                      child: Container(
+                        height: 4,
+                        margin: EdgeInsets.only(right: index < 3 ? 8 : 0),
+                        decoration: BoxDecoration(
+                          color: index <= _currentPage ? Colors.white : Colors.grey[300],
+                          borderRadius: BorderRadius.circular(2),
+                        ),
                       ),
-                    ),
-                  );
-                }),
+                    );
+                  }),
+                ),
               ),
-            ),
-            
-            const SizedBox(height: 10),
-            
-            // Page Content
-            Expanded(
-              child: PageView(
-                controller: _pageController,
-                onPageChanged: (index) => setState(() => _currentPage = index),
-                children: [
-                  _buildWelcomePage(),
-                  _buildInterestsPage(),
-                  _buildLocationPage(),
-                  _buildPreferencesPage(),
-                ],
+              
+              const SizedBox(height: 10),
+              
+              // Page Content
+              Expanded(
+                child: PageView(
+                  controller: _pageController,
+                  onPageChanged: (index) => setState(() => _currentPage = index),
+                  children: [
+                    _buildWelcomePage(),
+                    _buildInterestsPage(),
+                    _buildLocationPage(),
+                    _buildPreferencesPage(),
+                  ],
+                ),
               ),
-            ),
-            
-            // Navigation Button
-            Container(
-              padding: const EdgeInsets.all(20),
-              child: SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: (_currentPage == 1 && _selectedInterests.length < 3) ? null : _nextPage,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.deepPurple,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+              
+              // Navigation Button
+              Container(
+                padding: const EdgeInsets.all(20),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: (_currentPage == 1 && _selectedInterests.length < 3) ? null : _nextPage,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.deepPurpleAccent,
+                      foregroundColor: Colors.white,
+                      elevation: 8,
+                      shadowColor: Colors.white.withOpacity(0.3),
                     ),
-                    elevation: 3,
-                  ),
-                  child: Text(
-                    _currentPage == 3 ? 'Get Started' : 'Continue',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                    child: Text(
+                      _currentPage == 3 ? 'Get Started' : 'Continue',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
