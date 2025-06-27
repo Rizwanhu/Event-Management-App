@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+//import 'event_details_screen.dart';
 
 class AnalyticsDashboard extends StatelessWidget {
   const AnalyticsDashboard({super.key});
@@ -25,7 +26,7 @@ class AnalyticsDashboard extends StatelessWidget {
         itemCount: stats.length,
         itemBuilder: (context, index) {
           final stat = stats[index];
-          return Card(
+          Widget card = Card(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             elevation: 7,
             color: const Color.fromARGB(255, 115, 224, 224),
@@ -43,6 +44,19 @@ class AnalyticsDashboard extends StatelessWidget {
               ),
             ),
           );
+          // if (index == 0) {
+          //   card = InkWell(
+          //     borderRadius: BorderRadius.circular(16),
+          //     onTap: () {
+          //       Navigator.push(
+          //         context,
+          //         MaterialPageRoute(builder: (context) => const EventDetailsScreen()),
+          //       );
+          //     },
+          //     child: card,
+          //   );
+          // }
+          return card;
         },
       ),
     );
