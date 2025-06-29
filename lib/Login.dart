@@ -4,6 +4,7 @@ import 'signup.dart';
 import 'OnBoardingScreen.dart';
 import 'Admin/dashboard_screen.dart';
 import 'Event_Organizer/Dashboard.dart';
+import 'firebase_services.dart';
 
 enum UserRole { user, organizer, admin }
 
@@ -82,61 +83,26 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   }
 
   Future<void> _handleLogin() async {
-    if (!_formKey.currentState!.validate() || _selectedRole == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please fill all fields and select a role'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
+    if (!_formKey.currentState!.validate()) return;
+    
     setState(() => _isLoading = true);
-
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 2));
-
-    // Mock authentication - In real app, call your authentication API
-    bool isAuthenticated = _mockAuthenticate();
-
-    setState(() => _isLoading = false);    if (isAuthenticated) {
-      // Navigate based on selected role
-      Widget destinationPage;
-        switch (_selectedRole!) {
-        case UserRole.organizer:
-          destinationPage = const OrganizerDashboard();
-          break;
-        case UserRole.admin:
-          destinationPage = const AdminDashboardScreen();
-          break;
-        case UserRole.user:
-          // Check if user needs onboarding (in real app, check from user profile)
-          bool needsOnboarding = true; // Mock - check user's onboarding status
-          destinationPage = needsOnboarding 
-              ? const OnBoardingScreen()
-              : const MyHomePage(title: 'Event Management');
-          break;
-      }
-      
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => destinationPage),
-      );
-
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Invalid credentials. Please try again.'),
-          backgroundColor: Colors.red,
-        ),
+    
+    final firebaseService = FirebaseServices();
+    final user = await firebaseService.signInWithEmailAndPassword(
+      _emailController.text.trim(),
+      _passwordController.text,
+      context,
+    );
+    
+    setState(() => _isLoading = false);
+    
+    if (user != null) {
+      // Successfully logged in
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const OnBoardingScreen()),
       );
     }
-  }
-
-  bool _mockAuthenticate() {
-    // Mock authentication logic
-    // In real app, validate against your backend
-    return _emailController.text.isNotEmpty && _passwordController.text.length >= 6;
   }
 
   @override

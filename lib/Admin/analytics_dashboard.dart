@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-//import 'event_details_screen.dart';
+import 'event_details_screen.dart';
 
 class AnalyticsDashboard extends StatelessWidget {
   const AnalyticsDashboard({super.key});
@@ -11,6 +11,23 @@ class AnalyticsDashboard extends StatelessWidget {
       {'label': 'Boost Revenue', 'value': '\$3200', 'icon': Icons.monetization_on},
       {'label': 'Active Users', 'value': '580', 'icon': Icons.people},
       {'label': 'Reports', 'value': '12', 'icon': Icons.report},
+    ];
+
+    // Sample events data - replace with your actual data source
+    final events = [
+      {
+        'name': 'Tech Conference',
+        'location': 'Convention Center',
+        'time': '10:00 AM, June 30',
+        'image': 'https://example.com/tech-conf.jpg'
+      },
+      {
+        'name': 'Music Festival',
+        'location': 'Central Park',
+        'time': '6:00 PM, July 5',
+        'image': 'https://example.com/music-fest.jpg'
+      },
+      // Add more events as needed
     ];
 
     return Scaffold(
@@ -44,18 +61,22 @@ class AnalyticsDashboard extends StatelessWidget {
               ),
             ),
           );
-          // if (index == 0) {
-          //   card = InkWell(
-          //     borderRadius: BorderRadius.circular(16),
-          //     onTap: () {
-          //       Navigator.push(
-          //         context,
-          //         MaterialPageRoute(builder: (context) => const EventDetailsScreen()),
-          //       );
-          //     },
-          //     child: card,
-          //   );
-          // }
+          
+          if (index == 0) {
+            card = InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => EventDetailsScreen(events: events),
+                  ),
+                );
+              },
+              child: card,
+            );
+          }
+          
           return card;
         },
       ),

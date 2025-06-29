@@ -3,6 +3,8 @@ import 'Login.dart';
 import 'Event_Organizer/Dashboard.dart';
 import 'main.dart';
 import 'OnBoardingScreen.dart';
+import 'firebase_services.dart';
+
 //hello Rizwan .
 enum UserRole { user, organizer, admin }
 
@@ -127,7 +129,7 @@ class _SignUpPageState extends State<SignUpPage> with TickerProviderStateMixin {
       setState(() => _currentStep = 1);
       _pageController.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
     } else {
-      _handleSignUp();
+      _submitForm();
     }
   }
 
@@ -150,93 +152,33 @@ class _SignUpPageState extends State<SignUpPage> with TickerProviderStateMixin {
     }
   }
 
-  Future<void> _handleSignUp() async {
-    if (!_formKey.currentState!.validate() || !_agreeToTerms) {
+  Future<void> _submitForm() async {
+    if (!_formKey.currentState!.validate()) return;
+    if (!_agreeToTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please fill all required fields and agree to terms'),
-          backgroundColor: Colors.red,
-        ),
+        const SnackBar(content: Text('Please agree to terms and conditions')),
       );
       return;
     }
 
     setState(() => _isLoading = true);
-    await Future.delayed(const Duration(seconds: 2));
-    setState(() => _isLoading = false);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Account created successfully!'),
-        backgroundColor: Colors.green,
-      ),
-    );
-
-    // Navigate based on selected role
-    Widget destinationPage;
     
-    switch (_selectedRole!) {
-      case UserRole.organizer:
-        // Show success message for organizer account pending approval
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Account Created!'),
-            content: const Text(
-              'Your organizer account has been created successfully. '
-              'It will be reviewed and approved within 24-48 hours. '
-              'You can access your dashboard now, but some features may be limited until approval.',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop(); // Close dialog
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (context) => const OrganizerDashboard()),
-                  );
-                },
-                child: const Text('Go to Dashboard'),
-              ),
-            ],
-          ),
-        );
-        return; // Don't execute the code below
-        
-      case UserRole.admin:
-        // Show message for admin account requiring approval
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Admin Account Pending'),
-            content: const Text(
-              'Your admin account request has been submitted. '
-              'An existing administrator will review and approve your account. '
-              'You will be contacted via email once approved.',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop(); // Close dialog
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (context) => const LoginPage()),
-                  );
-                },
-                child: const Text('Back to Login'),
-              ),
-            ],
-          ),
-        );
-        return; // Don't execute the code below
-        
-      case UserRole.user:
-      default:
-        destinationPage = const OnBoardingScreen();
-        break;
-    }
-
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) => destinationPage),
+    final firebaseService = FirebaseServices();
+    final user = await firebaseService.signUpWithEmailAndPassword(
+      _emailController.text.trim(),
+      _passwordController.text,
+      context,
     );
+    
+    setState(() => _isLoading = false);
+    
+    if (user != null) {
+      // Successfully signed up
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const OnBoardingScreen()),
+      );
+    }
   }
 
   Widget _buildRoleSelection() {
