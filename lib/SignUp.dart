@@ -4,6 +4,7 @@ import 'Event_Organizer/Dashboard.dart';
 import 'main.dart';
 import 'OnBoardingScreen.dart';
 import 'firebase_services.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 //hello Rizwan .
 enum UserRole { user, organizer, admin }
@@ -41,7 +42,7 @@ class _SignUpPageState extends State<SignUpPage> with TickerProviderStateMixin {
   final _departmentController = TextEditingController();
   final _accessLevelController = TextEditingController();
   
-  UserRole? _selectedRole;
+  UserRole _selectedRole = UserRole.user;
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
   bool _isLoading = false;
@@ -129,7 +130,7 @@ class _SignUpPageState extends State<SignUpPage> with TickerProviderStateMixin {
       setState(() => _currentStep = 1);
       _pageController.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
     } else {
-      _submitForm();
+      _signUp();
     }
   }
 
@@ -152,32 +153,33 @@ class _SignUpPageState extends State<SignUpPage> with TickerProviderStateMixin {
     }
   }
 
-  Future<void> _submitForm() async {
-    if (!_formKey.currentState!.validate()) return;
-    if (!_agreeToTerms) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please agree to terms and conditions')),
-      );
-      return;
-    }
+  Future<void> _signUp() async {
+    if (_formKey.currentState!.validate()) {
+      try {
+        final firebaseService = FirebaseServices();
+        User? user = await firebaseService.signUp(
+          _emailController.text.trim(),
+          _passwordController.text,
+          '${_firstNameController.text} ${_lastNameController.text}',
+          _selectedRole.toString().split('.').last,
+          context,
+        );
 
-    setState(() => _isLoading = true);
-    
-    final firebaseService = FirebaseServices();
-    final user = await firebaseService.signUpWithEmailAndPassword(
-      _emailController.text.trim(),
-      _passwordController.text,
-      context,
-    );
-    
-    setState(() => _isLoading = false);
-    
-    if (user != null) {
-      // Successfully signed up
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const OnBoardingScreen()),
-      );
+        if (user != null) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const OnBoardingScreen()),
+          );
+        }
+      } on FirebaseAuthException catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message ?? 'Authentication failed')),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      }
     }
   }
 
