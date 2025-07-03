@@ -1,17 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'User/search_screen.dart';
-import 'User/Event/event_detail_page.dart';
 import 'User/promote_event_page.dart';
 import 'User/ProfileScreen.dart';
-import 'SplashScreen.dart';
+import 'Login.dart';
+import 'Firebase/auth_wrapper.dart';
+import 'Firebase/user_data_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized(); // required before Firebase init
+  
+  // Disable debug prints in release mode to avoid debugger pauses
+  if (kReleaseMode) {
+    debugPrint = (String? message, {int? wrapWidth}) {};
+  }
+  
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  
+  // Preload user data for faster profile loading
+  UserDataService().preloadUserData();
+  
   runApp(const MyApp());
 }
 
@@ -27,7 +39,10 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const SplashScreen(),
+      home: const AuthWrapper(),
+      routes: {
+        '/login': (context) => const LoginPage(),
+      },
     );
   }
 }

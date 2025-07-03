@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
-import 'main.dart';
 import 'signup.dart';
 import 'OnBoardingScreen.dart';
 import 'Admin/dashboard_screen.dart';
 import 'Event_Organizer/Dashboard.dart';
-import 'firebase_services.dart';
+import 'User/search_screen.dart';
+import 'Onboarding/onboarding_flow_screen.dart';
+import 'Firebase/auth_service.dart';
+import 'Firebase/onboarding_service.dart';
+import 'Models/user_model.dart';
+import 'Models/event_organizer_model.dart';
+import 'Models/admin_model.dart';
 
 enum UserRole { user, organizer, admin }
 
@@ -87,20 +92,139 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     
     setState(() => _isLoading = true);
     
-    final firebaseService = FirebaseServices();
-    final user = await firebaseService.signInWithEmailAndPassword(
-      _emailController.text.trim(),
-      _passwordController.text,
-      context,
+    try {
+      final authService = FirebaseAuthService();
+      final onboardingService = OnboardingService();
+      final result = await authService.signIn(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+      
+      if (result.success && result.user != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result.message),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        // Check if user has completed onboarding
+        final hasCompletedOnboarding = await onboardingService.hasCompletedOnboarding(result.user!.uid);
+        
+        Widget nextScreen;
+        if (!hasCompletedOnboarding) {
+          // Navigate to onboarding flow
+          nextScreen = const OnboardingFlowScreen();
+        } else {
+          // Navigate based on user role to dashboard
+          if (result.user is RegularUser) {
+            nextScreen = const SearchScreen();
+          } else if (result.user is EventOrganizer) {
+            nextScreen = const OrganizerDashboard();
+          } else if (result.user is AdminUser) {
+            nextScreen = const AdminDashboardScreen();
+          } else {
+            nextScreen = const OnboardingFlowScreen();
+          }
+        }
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => nextScreen),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result.message),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _showForgotPasswordDialog() async {
+    final emailController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Reset Password'),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Enter your email address and we\'ll send you a link to reset your password.',
+                style: TextStyle(fontSize: 14),
+              ),
+              const SizedBox(height: 20),
+              TextFormField(
+                controller: emailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(
+                  labelText: 'Email Address',
+                  prefixIcon: Icon(Icons.email),
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  if (value?.isEmpty ?? true) return 'Required';
+                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value!)) {
+                    return 'Invalid email';
+                  }
+                  return null;
+                },
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (formKey.currentState!.validate()) {
+                Navigator.pop(context);
+                await _resetPassword(emailController.text.trim());
+              }
+            },
+            child: const Text('Send Reset Link'),
+          ),
+        ],
+      ),
     );
-    
-    setState(() => _isLoading = false);
-    
-    if (user != null) {
-      // Successfully logged in
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const OnBoardingScreen()),
+  }
+
+  Future<void> _resetPassword(String email) async {
+    try {
+      final authService = FirebaseAuthService();
+      final result = await authService.resetPassword(email);
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result.message),
+          backgroundColor: result.success ? Colors.green : Colors.red,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
@@ -318,11 +442,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                               ],
                             ),
                             TextButton(
-                              onPressed: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Forgot password functionality')),
-                                );
-                              },
+                              onPressed: () => _showForgotPasswordDialog(),
                               child: Text(
                                 'Forgot Password?',
                                 style: TextStyle(

@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import 'Login.dart';
-import 'Event_Organizer/Dashboard.dart';
-import 'main.dart';
-import 'OnBoardingScreen.dart';
-import 'firebase_services.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'Firebase/auth_service.dart';
 
 //hello Rizwan .
 enum UserRole { user, organizer, admin }
@@ -121,12 +117,6 @@ class _SignUpPageState extends State<SignUpPage> with TickerProviderStateMixin {
 
   void _nextStep() {
     if (_currentStep == 0) {
-      if (_selectedRole == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select a role'), backgroundColor: Colors.red),
-        );
-        return;
-      }
       setState(() => _currentStep = 1);
       _pageController.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
     } else {
@@ -155,32 +145,114 @@ class _SignUpPageState extends State<SignUpPage> with TickerProviderStateMixin {
 
   Future<void> _signUp() async {
     if (_formKey.currentState!.validate()) {
-      try {
-        final firebaseService = FirebaseServices();
-        User? user = await firebaseService.signUp(
-          _emailController.text.trim(),
-          _passwordController.text,
-          '${_firstNameController.text} ${_lastNameController.text}',
-          _selectedRole.toString().split('.').last,
-          context,
+      if (!_agreeToTerms) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please agree to terms and conditions'),
+            backgroundColor: Colors.red,
+          ),
         );
+        return;
+      }
 
-        if (user != null) {
+      setState(() => _isLoading = true);
+
+      try {
+        final authService = FirebaseAuthService();
+        AuthResult result;
+
+        switch (_selectedRole) {
+          case UserRole.user:
+            result = await authService.signUpRegularUser(
+              email: _emailController.text.trim(),
+              password: _passwordController.text,
+              firstName: _firstNameController.text.trim(),
+              lastName: _lastNameController.text.trim(),
+              phone: _phoneController.text.trim(),
+              dateOfBirth: _dateOfBirthController.text.isNotEmpty
+                  ? _parseDate(_dateOfBirthController.text)
+                  : null,
+            );
+            break;
+
+          case UserRole.organizer:
+            result = await authService.signUpEventOrganizer(
+              email: _emailController.text.trim(),
+              password: _passwordController.text,
+              firstName: _firstNameController.text.trim(),
+              lastName: _lastNameController.text.trim(),
+              phone: _phoneController.text.trim(),
+              companyName: _companyNameController.text.trim(),
+              businessLicense: _businessLicenseController.text.trim(),
+              website: _websiteController.text.isNotEmpty 
+                  ? _websiteController.text.trim() 
+                  : null,
+              yearsOfExperience: int.tryParse(_experienceController.text) ?? 0,
+            );
+            break;
+
+          case UserRole.admin:
+            result = await authService.signUpAdmin(
+              email: _emailController.text.trim(),
+              password: _passwordController.text,
+              firstName: _firstNameController.text.trim(),
+              lastName: _lastNameController.text.trim(),
+              phone: _phoneController.text.trim(),
+              employeeId: _employeeIdController.text.trim(),
+              department: _departmentController.text,
+              accessLevel: _accessLevelController.text,
+            );
+            break;
+        }
+
+        if (result.success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result.message),
+              backgroundColor: Colors.green,
+            ),
+          );
+          
+          // Navigate to login page instead of directly to dashboard
+          // This ensures proper authentication flow
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const OnBoardingScreen()),
+            MaterialPageRoute(builder: (context) => const LoginPage()),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result.message),
+              backgroundColor: Colors.red,
+            ),
           );
         }
-      } on FirebaseAuthException catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message ?? 'Authentication failed')),
-        );
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
         );
+      } finally {
+        setState(() => _isLoading = false);
       }
     }
+  }
+
+  DateTime? _parseDate(String dateString) {
+    try {
+      List<String> parts = dateString.split('/');
+      if (parts.length == 3) {
+        int day = int.parse(parts[0]);
+        int month = int.parse(parts[1]);
+        int year = int.parse(parts[2]);
+        return DateTime(year, month, day);
+      }
+    } catch (e) {
+      debugPrint('Error parsing date: $e');
+    }
+    return null;
   }
 
   Widget _buildRoleSelection() {
@@ -380,9 +452,7 @@ class _SignUpPageState extends State<SignUpPage> with TickerProviderStateMixin {
   }
 
   Widget _buildRoleSpecificFields() {
-    if (_selectedRole == null) return const SizedBox();
-
-    switch (_selectedRole!) {
+    switch (_selectedRole) {
       case UserRole.user:
         return _buildUserFields();
       case UserRole.organizer:

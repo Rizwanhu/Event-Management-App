@@ -59,10 +59,7 @@ class _PromoteEventPageState extends State<PromoteEventPage> {
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
+        automaticallyImplyLeading: false, // This removes the back button
       ),
       body: SingleChildScrollView(
         child: Padding(

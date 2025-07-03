@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
-import 'BoostEvent.dart';
 import 'create_edit_event_screen.dart';
+import 'organizer_settings_screen.dart';
+import 'notifications_screen.dart';
+import '../Firebase/event_management_service.dart';
+import '../Firebase/notification_service.dart';
+import '../Models/event_model.dart';
 
 class OrganizerDashboard extends StatefulWidget {
   const OrganizerDashboard({super.key});
@@ -13,57 +17,97 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
     with TickerProviderStateMixin {
   late TabController _tabController;
   int selectedNavIndex = 0;
-
-  // Mock data
-   List<Event> events = [
-    Event(
-      id: '1',
-      title: 'Summer Music Festival 2024',
-      date: DateTime(2024, 7, 15),
-      status: EventStatus.live,
-      ticketsSold: 245,
-      totalTickets: 500,
-      revenue: 18750.0,
-      likes: 156,
-      comments: 42,
-      shares: 28,
-      rating: 4.2,
-      reviews: 87,
-    ),
-    Event(
-      id: '2',
-      title: 'Tech Conference 2024',
-      date: DateTime(2024, 8, 20),
-      status: EventStatus.approved,
-      ticketsSold: 89,
-      totalTickets: 200,
-      revenue: 8900.0,
-      likes: 78,
-      comments: 15,
-      shares: 12,
-      rating: 0.0,
-      reviews: 0,
-    ),
-    Event(
-      id: '3',
-      title: 'Food & Wine Festival',
-      date: DateTime(2024, 6, 10),
-      status: EventStatus.pending,
-      ticketsSold: 0,
-      totalTickets: 300,
-      revenue: 0.0,
-      likes: 23,
-      comments: 5,
-      shares: 3,
-      rating: 0.0,
-      reviews: 0,
-    ),
-  ];
+  final EventManagementService _eventService = EventManagementService();
+  final NotificationService _notificationService = NotificationService();
+  List<EventModel> events = [];
+  Map<String, dynamic> _statistics = {};
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    _loadEvents();
+    _loadStatistics();
+  }
+
+  Future<void> _loadEvents() async {
+    try {
+      // First check if user is authenticated
+      if (!mounted) return;
+      
+      print('Starting to load events...');
+      
+      // Try to use the one-time fetch first as it's more reliable
+      try {
+        final eventList = await _eventService.getOrganizerEventsOnce();
+        if (mounted) {
+          print('Received ${eventList.length} events via one-time fetch');
+          setState(() {
+            events = eventList;
+          });
+        }
+        
+        // After successful one-time fetch, set up the stream for real-time updates
+        _eventService.getOrganizerEvents()
+          .timeout(const Duration(seconds: 10))
+          .listen(
+            (eventList) {
+              if (mounted) {
+                print('Stream update: ${eventList.length} events');
+                setState(() {
+                  events = eventList;
+                });
+              }
+            },
+            onError: (error) {
+              print('Stream error (non-fatal): $error');
+              // Don't show error for stream failures after initial load
+            },
+          );
+      } catch (e) {
+        print('One-time fetch failed, trying stream only: $e');
+        
+        // Fallback to stream only
+        _eventService.getOrganizerEvents()
+          .timeout(const Duration(seconds: 15))
+          .listen(
+            (eventList) {
+              if (mounted) {
+                print('Received ${eventList.length} events via stream');
+                setState(() {
+                  events = eventList;
+                });
+              }
+            },
+            onError: (error) {
+              print('Error loading events: $error');
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Failed to load events: $error')),
+                );
+              }
+            },
+          );
+      }
+    } catch (e) {
+      print('Exception in _loadEvents: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load events: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _loadStatistics() async {
+    try {
+      final stats = await _eventService.getEventStatistics();
+      setState(() {
+        _statistics = stats;
+      });
+    } catch (e) {
+      debugPrint('Error loading statistics: $e');
+    }
   }
 
   @override
@@ -78,6 +122,7 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
+        automaticallyImplyLeading: false, // This removes the back button
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Container(
@@ -86,13 +131,60 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
           ),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {},
+          StreamBuilder<int>(
+            stream: _notificationService.getUnreadCount(),
+            builder: (context, snapshot) {
+              final unreadCount = snapshot.data ?? 0;
+              return Stack(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.notifications_outlined),
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const NotificationsScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  if (unreadCount > 0)
+                    Positioned(
+                      right: 8,
+                      top: 8,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 16,
+                          minHeight: 16,
+                        ),
+                        child: Text(
+                          unreadCount > 99 ? '99+' : unreadCount.toString(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
           ),
           IconButton(
             icon: const Icon(Icons.settings_outlined),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const OrganizerSettingsScreen(),
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -140,10 +232,10 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
   }
 
   Widget _buildOverviewTab() {
-    int totalEvents = events.length;
-    int totalTicketsSold = events.fold(0, (sum, event) => sum + event.ticketsSold);
-    int upcomingEvents = events.where((e) => e.date.isAfter(DateTime.now())).length;
-    double totalRevenue = events.fold(0.0, (sum, event) => sum + event.revenue);
+    int totalEvents = _statistics['totalEvents'] ?? events.length;
+    int totalTicketsSold = _statistics['totalAttendees'] ?? 0;
+    int upcomingEvents = events.where((e) => e.eventDate.isAfter(DateTime.now())).length;
+    double totalRevenue = _statistics['totalRevenue'] ?? 0.0;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -345,54 +437,22 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
       ],
     );
   }
-  void _editEvent(Event event) {
-  // Convert Event object to Map format expected by CreateEditEventScreen
-  final eventData = {
-    'title': event.title,
-    'description': '', // You might want to add description field to Event class
-    'location': '', // You might want to add location field to Event class
-    'date': event.date,
-    'category': 'Conference', // Default or add to Event class
-    'tags': <String>[], // Add to Event class if needed
-    'isPaid': event.totalTickets > 0,
-    'price': event.totalTickets > 0 ? (event.revenue / event.ticketsSold).toStringAsFixed(2) : '',
-    'quantity': event.totalTickets,
-  };
-
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => CreateEditEventScreen(event: eventData),
-    ),
-  ).then((updatedEventData) {
-    if (updatedEventData != null) {
-      // Update the existing event
-      setState(() {
-        final index = events.indexWhere((e) => e.id == event.id);
-        if (index != -1) {
-          events[index] = Event(
-            id: event.id, // Keep same ID
-            title: updatedEventData['title'],
-            date: updatedEventData['date'],
-            status: event.status, // Keep current status
-            ticketsSold: event.ticketsSold, // Keep current sales
-            totalTickets: updatedEventData['isPaid'] ? (updatedEventData['quantity'] ?? 0) : 0,
-            revenue: event.revenue, // Keep current revenue
-            likes: event.likes,
-            comments: event.comments,
-            shares: event.shares,
-            rating: event.rating,
-            reviews: event.reviews,
-          );
-        }
-      });
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Event updated successfully!')),
-      );
-    }
-  });
-}
+  void _editEvent(EventModel event) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CreateEditEventScreen(event: event),
+      ),
+    ).then((result) {
+      if (result != null) {
+        // Refresh events list after edit
+        _loadEvents();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Event updated successfully!')),
+        );
+      }
+    });
+  }
 
   Widget _buildAnalyticsTab() {
     return SingleChildScrollView(
@@ -721,7 +781,7 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
     );
   }
 
-  Widget _buildEventCard(Event event, {bool isCompact = false}) {
+  Widget _buildEventCard(EventModel event, {bool isCompact = false}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
@@ -741,6 +801,45 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
         children: [
           Row(
             children: [
+              // Event image thumbnail
+              if (event.imageUrls.isNotEmpty)
+                Container(
+                  width: 60,
+                  height: 60,
+                  margin: const EdgeInsets.only(right: 12),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      event.imageUrls.first,
+                      fit: BoxFit.cover,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          color: Colors.grey.shade200,
+                          child: const Center(
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: Colors.grey.shade200,
+                          child: const Icon(Icons.image_not_supported, color: Colors.grey),
+                        );
+                      },
+                    ),
+                  ),
+                ),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -756,7 +855,7 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${event.date.day}/${event.date.month}/${event.date.year}',
+                      '${event.eventDate.day}/${event.eventDate.month}/${event.eventDate.year}',
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.grey.shade600,
@@ -780,16 +879,16 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                     children: [
                       Expanded(
                         child: _buildEventStat(
-                          'Tickets Sold',
-                          '${event.ticketsSold}/${event.totalTickets}',
-                          event.ticketsSold / event.totalTickets,
+                          'Attendees',
+                          '${event.currentAttendees}/${event.maxAttendees ?? 'Unlimited'}',
+                          event.maxAttendees != null ? event.currentAttendees / event.maxAttendees! : 0.0,
                         ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
                         child: _buildEventStat(
                           'Revenue',
-                          '\$${event.revenue.toStringAsFixed(0)}',
+                          '\$${_calculateRevenue(event).toStringAsFixed(0)}',
                           null,
                         ),
                       ),
@@ -799,14 +898,14 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                   return Column(
                     children: [
                       _buildEventStat(
-                        'Tickets Sold',
-                        '${event.ticketsSold}/${event.totalTickets}',
-                        event.ticketsSold / event.totalTickets,
+                        'Attendees',
+                        '${event.currentAttendees}/${event.maxAttendees ?? 'Unlimited'}',
+                        event.maxAttendees != null ? event.currentAttendees / event.maxAttendees! : 0.0,
                       ),
                       const SizedBox(height: 12),
                       _buildEventStat(
                         'Revenue',
-                        '\$${event.revenue.toStringAsFixed(0)}',
+                        '\$${_calculateRevenue(event).toStringAsFixed(0)}',
                         null,
                       ),
                     ],
@@ -817,16 +916,15 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
             
             const SizedBox(height: 12),
             
-            // Social Stats - Wrap for mobile
+            // Event Info - Wrap for mobile
             Wrap(
               spacing: 12,
               runSpacing: 6,
               children: [
-                _buildSocialStat(Icons.favorite, event.likes.toString(), Colors.red),
-                _buildSocialStat(Icons.comment, event.comments.toString(), Colors.blue),
-                _buildSocialStat(Icons.share, event.shares.toString(), Colors.green),
-                if (event.rating > 0)
-                  _buildSocialStat(Icons.star, event.rating.toStringAsFixed(1), Colors.amber),
+                _buildSocialStat(Icons.people, event.currentAttendees.toString(), Colors.blue),
+                _buildSocialStat(Icons.category, event.category, Colors.green),
+                _buildSocialStat(Icons.schedule, _formatEventTime(event), Colors.orange),
+                _buildSocialStat(Icons.location_on, event.location.split(',').first, Colors.red),
               ],
             ),
             
@@ -1112,40 +1210,21 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
     );
   }
   void _showCreateEventDialog() {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => const CreateEditEventScreen(),
-    ),
-  ).then((eventData) {
-    if (eventData != null) {
-      // Create a new Event object from the returned data
-      final newEvent = Event(
-        id: DateTime.now().millisecondsSinceEpoch.toString(), // Generate unique ID
-        title: eventData['title'],
-        date: eventData['date'],
-        status: EventStatus.pending, // New events start as pending
-        ticketsSold: 0,
-        totalTickets: eventData['isPaid'] ? (eventData['quantity'] ?? 0) : 0,
-        revenue: 0.0,
-        likes: 0,
-        comments: 0,
-        shares: 0,
-        rating: 0.0,
-        reviews: 0,
-      );
-      
-      // Add to the events list and refresh UI
-      setState(() {
-        events.insert(0, newEvent); // Add at the beginning
-      });
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Event created successfully!')),
-      );
-    }
-  });
-}
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const CreateEditEventScreen(),
+      ),
+    ).then((result) {
+      if (result != null) {
+        // Refresh events list after creation
+        _loadEvents();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Event created successfully!')),
+        );
+      }
+    });
+  }
   // void _showCreateEventDialog() {
   //   showDialog(
   //     context: context,
@@ -1295,75 +1374,30 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
       ),
     );
   }
-  // Navigation to Boost Event page or dialog
-  void _navigateToBoostEvent() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => BoostEventScreen(
-          eventId: '1', // TODO: Pass actual event ID
-          eventTitle: 'Summer Music Festival 2024', // TODO: Pass actual event title
-        ),
-      ),
-    );
-  }
-
-  // Handle popup menu selection
-  void _handleMenuSelection(String value) {
-    switch (value) {
-      case 'boost':
-        _navigateToBoostEvent();
-        break;
-      case 'analytics':
-        _navigateToAnalytics();
-        break;
-      case 'management':
-        _navigateToManagement();
-        break;
-      case 'report':
-        _navigateToReport();
-        break;
-      case 'managers':
-        _navigateToManagers();
-        break;
-      default:
-        break;
-    }
-  }
-
-  // Navigate to Analytics tab
-  void _navigateToAnalytics() {
-    _tabController.animateTo(2);
-  }
-
-  // Navigate to Report (placeholder implementation)
-  void _navigateToReport() {
-    // TODO: Implement navigation to report screen
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Navigate to Report')),
-    );
-  }
-
-  // Navigate to Managers (placeholder implementation)
-  void _navigateToManagers() {
-    // TODO: Implement navigation to managers screen
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Navigate to Managers')),
-    );
-  }
-
-  // Navigate to Management (placeholder implementation)
-  void _navigateToManagement() {
-    // TODO: Implement navigation to management screen
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Navigate to Management')),
-    );
-  }
 
   @override
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  // Helper methods for EventModel
+  double _calculateRevenue(EventModel event) {
+    if (event.ticketType == TicketType.paid && event.ticketPrice != null) {
+      return event.currentAttendees * event.ticketPrice!;
+    }
+    return 0.0;
+  }
+
+  String _formatEventTime(EventModel event) {
+    if (event.eventTime != null) {
+      final hour = event.eventTime!.hour;
+      final minute = event.eventTime!.minute;
+      final period = hour >= 12 ? 'PM' : 'AM';
+      final formattedHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
+      return '$formattedHour:${minute.toString().padLeft(2, '0')} $period';
+    }
+    return 'All Day';
   }
 }
 
@@ -1408,36 +1442,3 @@ class LineChartPainter extends CustomPainter {
   @override
   bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
-
-// Data models
-class Event {
-  final String id;
-  final String title;
-  final DateTime date;
-  final EventStatus status;
-  final int ticketsSold;
-  final int totalTickets;
-  final double revenue;
-  final int likes;
-  final int comments;
-  final int shares;
-  final double rating;
-  final int reviews;
-
-  Event({
-    required this.id,
-    required this.title,
-    required this.date,
-    required this.status,
-    required this.ticketsSold,
-    required this.totalTickets,
-    required this.revenue,
-    required this.likes,
-    required this.comments,
-    required this.shares,
-    required this.rating,
-    required this.reviews,
-  });
-}
-
-enum EventStatus { pending, approved, live }
