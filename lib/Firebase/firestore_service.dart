@@ -91,7 +91,7 @@ class FirestoreService {
         .toList();
   }
 
-  // Get all admins (for super admin purposes)
+  // Get all admins
   Future<List<AdminUser>> getAllAdmins() async {
     final querySnapshot = await _firestore.collection(adminsCollection).get();
     return querySnapshot.docs
@@ -99,7 +99,7 @@ class FirestoreService {
         .toList();
   }
 
-  // Get pending organizers (for admin approval)
+  // Get pending organizers
   Future<List<EventOrganizer>> getPendingOrganizers() async {
     final querySnapshot = await _firestore
         .collection(organizersCollection)
@@ -110,16 +110,7 @@ class FirestoreService {
         .toList();
   }
 
-  // Get inactive admins (for approval)
-  Future<List<AdminUser>> getInactiveAdmins() async {
-    final querySnapshot = await _firestore
-        .collection(adminsCollection)
-        .where('isActive', isEqualTo: false)
-        .get();
-    return querySnapshot.docs
-        .map((doc) => AdminUser.fromMap(doc.data(), doc.id))
-        .toList();
-  }
+  // Note: getInactiveAdmins method removed since admins don't have isActive status anymore
 
   // Approve organizer
   Future<void> approveOrganizer(String organizerId) async {
@@ -129,12 +120,7 @@ class FirestoreService {
     });
   }
 
-  // Approve admin
-  Future<void> approveAdmin(String adminId) async {
-    await _firestore.collection(adminsCollection).doc(adminId).update({
-      'isActive': true,
-    });
-  }
+  // Note: approveAdmin method removed since admins don't need approval anymore
 
   // Reject organizer
   Future<void> rejectOrganizer(String organizerId) async {
