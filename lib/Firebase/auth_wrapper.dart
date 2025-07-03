@@ -81,8 +81,8 @@ class AuthWrapper extends StatelessWidget {
                 final user = userSnapshot.data!;
                 debugPrint('AuthWrapper: User data loaded: ${user.runtimeType}');
                 
-                // Check if user is active
-                if (!user.isActive) {
+                // Check if user is active (skip for admin users)
+                if (user.role != 'admin' && !user.isActive) {
                   debugPrint('AuthWrapper: User is inactive');
                   return const _InactiveUserScreen();
                 }

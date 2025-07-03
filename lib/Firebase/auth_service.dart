@@ -55,7 +55,8 @@ class FirebaseAuthService {
       await _firestore
           .collection('users')
           .doc(credential.user!.uid)
-          .set(user.toMap());
+          .set(user.toMap())
+          .timeout(const Duration(seconds: 10));
 
       // Update display name
       await credential.user!.updateDisplayName(user.fullName);
@@ -115,7 +116,8 @@ class FirebaseAuthService {
       await _firestore
           .collection('event_organizers')
           .doc(credential.user!.uid)
-          .set(organizer.toMap());
+          .set(organizer.toMap())
+          .timeout(const Duration(seconds: 10));
 
       // Update display name
       await credential.user!.updateDisplayName(organizer.fullName);
@@ -145,9 +147,6 @@ class FirebaseAuthService {
     required String firstName,
     required String lastName,
     required String phone,
-    required String employeeId,
-    required String department,
-    required String accessLevel,
   }) async {
     try {
       // Create auth user
@@ -164,24 +163,21 @@ class FirebaseAuthService {
         lastName: lastName,
         phone: phone,
         createdAt: DateTime.now(),
-        employeeId: employeeId,
-        department: department,
-        accessLevel: accessLevel,
-        isActive: false, // Admin accounts need approval
       );
 
       // Save to Firestore
       await _firestore
           .collection('admins')
           .doc(credential.user!.uid)
-          .set(admin.toMap());
+          .set(admin.toMap())
+          .timeout(const Duration(seconds: 10));
 
       // Update display name
       await credential.user!.updateDisplayName(admin.fullName);
 
       return AuthResult(
         success: true,
-        message: 'Admin account created successfully! Pending approval from existing administrators.',
+        message: 'Admin account created successfully! You can now login.',
         user: admin,
       );
     } on FirebaseAuthException catch (e) {
@@ -219,8 +215,8 @@ class FirebaseAuthService {
         );
       }
 
-      // Check if user is active
-      if (!user.isActive) {
+      // Check if user is active (skip for admin users)
+      if (user.role != 'admin' && !user.isActive) {
         await _auth.signOut();
         return AuthResult(
           success: false,
@@ -228,12 +224,18 @@ class FirebaseAuthService {
         );
       }
 
-      // Update last login for admin users
+      // Update last login for admin users (non-blocking)
       if (user is AdminUser) {
-        await _firestore
-            .collection('admins')
-            .doc(user.uid)
-            .update({'lastLoginAt': FieldValue.serverTimestamp()});
+        try {
+          await _firestore
+              .collection('admins')
+              .doc(user.uid)
+              .update({'lastLoginAt': FieldValue.serverTimestamp()})
+              .timeout(const Duration(seconds: 5));
+        } catch (e) {
+          debugPrint('Warning: Failed to update admin last login time: $e');
+          // Don't fail the login process if this update fails
+        }
       }
 
       return AuthResult(
@@ -370,7 +372,11 @@ class FirebaseAuthService {
               : 'admins';
         
         // Delete user data from Firestore
-        await _firestore.collection(collection).doc(user.uid).delete();
+        await _firestore
+            .collection(collection)
+            .doc(user.uid)
+            .delete()
+            .timeout(const Duration(seconds: 10));
       }
 
       // Delete auth user
