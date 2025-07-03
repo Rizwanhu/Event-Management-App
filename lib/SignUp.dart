@@ -34,9 +34,7 @@ class _SignUpPageState extends State<SignUpPage> with TickerProviderStateMixin {
   final _experienceController = TextEditingController();
   
   // Admin specific fields
-  final _employeeIdController = TextEditingController();
-  final _departmentController = TextEditingController();
-  final _accessLevelController = TextEditingController();
+  // (No admin-specific fields needed)
   
   UserRole _selectedRole = UserRole.user;
   bool _isPasswordVisible = false;
@@ -74,9 +72,6 @@ class _SignUpPageState extends State<SignUpPage> with TickerProviderStateMixin {
     _businessLicenseController.dispose();
     _websiteController.dispose();
     _experienceController.dispose();
-    _employeeIdController.dispose();
-    _departmentController.dispose();
-    _accessLevelController.dispose();
     _fadeController.dispose();
     _pageController.dispose();
     super.dispose();
@@ -198,9 +193,6 @@ class _SignUpPageState extends State<SignUpPage> with TickerProviderStateMixin {
               firstName: _firstNameController.text.trim(),
               lastName: _lastNameController.text.trim(),
               phone: _phoneController.text.trim(),
-              employeeId: _employeeIdController.text.trim(),
-              department: _departmentController.text,
-              accessLevel: _accessLevelController.text,
             );
             break;
         }
@@ -587,48 +579,6 @@ class _SignUpPageState extends State<SignUpPage> with TickerProviderStateMixin {
     return Column(
       children: [
         const SizedBox(height: 20),
-        TextFormField(
-          controller: _employeeIdController,
-          decoration: InputDecoration(
-            labelText: 'Employee ID',
-            prefixIcon: const Icon(Icons.badge),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
-            filled: true,
-            fillColor: Colors.white,
-          ),
-          validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
-        ),
-        const SizedBox(height: 20),
-        DropdownButtonFormField<String>(
-          decoration: InputDecoration(
-            labelText: 'Department',
-            prefixIcon: const Icon(Icons.domain),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
-            filled: true,
-            fillColor: Colors.white,
-          ),
-          items: ['IT', 'Operations', 'Customer Support', 'Marketing', 'Finance']
-              .map((dept) => DropdownMenuItem(value: dept, child: Text(dept)))
-              .toList(),
-          onChanged: (value) => _departmentController.text = value ?? '',
-          validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
-        ),
-        const SizedBox(height: 20),
-        DropdownButtonFormField<String>(
-          decoration: InputDecoration(
-            labelText: 'Access Level',
-            prefixIcon: const Icon(Icons.security),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
-            filled: true,
-            fillColor: Colors.white,
-          ),
-          items: ['Level 1', 'Level 2', 'Level 3', 'Super Admin']
-              .map((level) => DropdownMenuItem(value: level, child: Text(level)))
-              .toList(),
-          onChanged: (value) => _accessLevelController.text = value ?? '',
-          validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
-        ),
-        const SizedBox(height: 20),
         Container(
           padding: const EdgeInsets.all(15),
           decoration: BoxDecoration(
@@ -638,11 +588,11 @@ class _SignUpPageState extends State<SignUpPage> with TickerProviderStateMixin {
           ),
           child: const Row(
             children: [
-              Icon(Icons.warning, color: Colors.red),
+              Icon(Icons.info, color: Colors.red),
               SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Admin accounts require approval from existing administrators. You will be contacted for verification.',
+                  'As an Admin, you will have access to manage the platform, users, and events.',
                   style: TextStyle(color: Colors.red, fontSize: 12),
                 ),
               ),
