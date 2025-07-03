@@ -5,8 +5,11 @@ import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../Firebase/event_management_service.dart';
 import '../Models/event_model.dart';
+
 
 class CreateEditEventScreen extends StatefulWidget {
   final EventModel? event;
@@ -572,6 +575,27 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
     setState(() => _selectedImages.removeAt(index));
   }
 
+  Future<String?> _uploadImageToCloudinary(File imageFile) async {
+    const String cloudName = 'daffsyxdy'; // TODO: Replace with your Cloudinary cloud name
+    const String uploadPreset = 'Event Management'; // TODO: Replace with your unsigned upload preset
+    final url = Uri.parse("https://api.cloudinary.com/v1_1/daffsyxdy/image/upload");
+
+
+    final request = http.MultipartRequest('POST', url)
+      ..fields['upload_preset'] = uploadPreset
+      ..files.add(await http.MultipartFile.fromPath('file', imageFile.path));
+
+    final response = await request.send();
+    if (response.statusCode == 200) {
+      final respStr = await response.stream.bytesToString();
+      final respData = json.decode(respStr);
+      return respData['secure_url'] as String?;
+    } else {
+      print('Cloudinary upload failed: ${response.statusCode}');
+      return null;
+    }
+  }
+
   Future<void> _saveEvent() async {
     if (!_formKey.currentState!.validate()) return;
     
@@ -592,19 +616,22 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
         throw Exception('User not authenticated');
       }
 
-      // Upload images first if any
+      // Upload images to Cloudinary first if any
       List<String> imageUrls = [];
       if (_selectedImages.isNotEmpty) {
-        // Create a temporary event ID for image upload
-        final tempEventId = widget.event?.id ?? 'temp_${DateTime.now().millisecondsSinceEpoch}';
-        
         try {
-          print('Starting image upload for ${_selectedImages.length} images...');
-          imageUrls = await _eventService.uploadEventImages(_selectedImages, tempEventId);
-          print('Image upload completed. Got ${imageUrls.length} URLs');
+          print('Starting Cloudinary upload for ${_selectedImages.length} images...');
+          for (final image in _selectedImages) {
+            final url = await _uploadImageToCloudinary(File(image.path));
+            if (url != null) {
+              imageUrls.add(url);
+            } else {
+              throw Exception('Failed to upload image to Cloudinary');
+            }
+          }
+          print('Cloudinary upload completed. Got ${imageUrls.length} URLs');
         } catch (e) {
-          print('Image upload failed: $e');
-          
+          print('Cloudinary upload failed: $e');
           // Show user a choice: continue without images or retry
           final shouldContinue = await showDialog<bool>(
             context: context,
@@ -626,11 +653,9 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
               ],
             ),
           ) ?? false;
-          
           if (!shouldContinue) {
             return; // User chose to cancel
           }
-          
           // Continue without images
           imageUrls = [];
         }
