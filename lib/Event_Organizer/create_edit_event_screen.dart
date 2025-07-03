@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:io';
+import 'dart:typed_data';
+import '../Firebase/event_management_service.dart';
+import '../Models/event_model.dart';
 
 class CreateEditEventScreen extends StatefulWidget {
-  final Map<String, dynamic>? event;
+  final EventModel? event;
   
-  const CreateEditEventScreen({Key? key, this.event}) : super(key: key);
+  const CreateEditEventScreen({super.key, this.event});
 
   @override
   _CreateEditEventScreenState createState() => _CreateEditEventScreenState();
@@ -19,15 +24,17 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
   final _locationController = TextEditingController();
   final _priceController = TextEditingController();
   final _quantityController = TextEditingController();
+  final EventManagementService _eventService = EventManagementService();
   
+  bool _isLoading = false;
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
   String _selectedCategory = 'Conference';
   List<String> _tags = [];
-  List<File> _selectedImages = [];
+  List<XFile> _selectedImages = [];
+  List<String> _existingImageUrls = []; // For existing images when editing
   bool _isPaidEvent = false;
   LatLng? _selectedLocation;
-  GoogleMapController? _mapController;
   
   final List<String> _categories = [
     'Conference', 'Workshop', 'Seminar', 'Concert', 'Sports', 'Festival', 'Networking', 'Other'
@@ -47,16 +54,23 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
 
   void _populateFields() {
     final event = widget.event!;
-    _titleController.text = event['title'] ?? '';
-    _descriptionController.text = event['description'] ?? '';
-    _locationController.text = event['location'] ?? '';
-    _selectedCategory = event['category'] ?? 'Conference';
-    _tags = List<String>.from(event['tags'] ?? []);
-    _isPaidEvent = event['isPaid'] ?? false;
+    _titleController.text = event.title;
+    _descriptionController.text = event.description;
+    _locationController.text = event.location;
+    _selectedCategory = event.category;
+    _tags = List<String>.from(event.tags);
+    _selectedDate = event.eventDate;
+    _selectedTime = event.eventTime;
+    _isPaidEvent = event.ticketType == TicketType.paid;
     if (_isPaidEvent) {
-      _priceController.text = event['price']?.toString() ?? '';
-      _quantityController.text = event['quantity']?.toString() ?? '';
+      _priceController.text = event.ticketPrice?.toString() ?? '';
+      _quantityController.text = event.maxAttendees?.toString() ?? '';
     }
+    if (event.latitude != null && event.longitude != null) {
+      _selectedLocation = LatLng(event.latitude!, event.longitude!);
+    }
+    // Set existing image URLs
+    _existingImageUrls = List<String>.from(event.imageUrls);
   }
 
   @override
@@ -68,8 +82,17 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
         foregroundColor: Colors.white,
         actions: [
           TextButton(
-            onPressed: _saveEvent,
-            child: const Text('SAVE', style: TextStyle(color: Colors.white)),
+            onPressed: _isLoading ? null : _saveEvent,
+            child: _isLoading 
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+              : const Text('SAVE', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -194,7 +217,7 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
               ),
               child: GoogleMap(
                 onMapCreated: (GoogleMapController controller) {
-                  _mapController = controller;
+                  // Map controller for future use
                 },
                 initialCameraPosition: const CameraPosition(
                   target: LatLng(37.4219983, -122.084),
@@ -288,45 +311,152 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
               ],
             ),
             const SizedBox(height: 16),
-            if (_selectedImages.isNotEmpty)
+            
+            // Display existing images (URLs) and new images (Files)
+            if (_existingImageUrls.isNotEmpty || _selectedImages.isNotEmpty)
               SizedBox(
                 height: 100,
-                child: ListView.builder(
+                child: ListView(
                   scrollDirection: Axis.horizontal,
-                  itemCount: _selectedImages.length,
-                  itemBuilder: (context, index) {
-                    return Container(
-                      margin: const EdgeInsets.only(right: 8),
-                      child: Stack(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.file(
-                              _selectedImages[index],
-                              width: 100,
-                              height: 100,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                          Positioned(
-                            top: 4,
-                            right: 4,
-                            child: GestureDetector(
-                              onTap: () => _removeImage(index),
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: const BoxDecoration(
-                                  color: Colors.red,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(Icons.close, color: Colors.white, size: 16),
+                  children: [
+                    // Existing images from URLs
+                    ..._existingImageUrls.asMap().entries.map((entry) {
+                      int index = entry.key;
+                      String imageUrl = entry.value;
+                      return Container(
+                        margin: const EdgeInsets.only(right: 8),
+                        child: Stack(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.network(
+                                imageUrl,
+                                width: 100,
+                                height: 100,
+                                fit: BoxFit.cover,
+                                loadingBuilder: (context, child, loadingProgress) {
+                                  if (loadingProgress == null) return child;
+                                  return Container(
+                                    width: 100,
+                                    height: 100,
+                                    color: Colors.grey.shade200,
+                                    child: const Center(
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    ),
+                                  );
+                                },
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    width: 100,
+                                    height: 100,
+                                    color: Colors.grey.shade200,
+                                    child: const Icon(Icons.image_not_supported, color: Colors.grey),
+                                  );
+                                },
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
+                            Positioned(
+                              top: 4,
+                              right: 4,
+                              child: GestureDetector(
+                                onTap: () => _removeExistingImage(index),
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.red,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(Icons.close, color: Colors.white, size: 16),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                    
+                    // New selected images from files
+                    ..._selectedImages.asMap().entries.map((entry) {
+                      int index = entry.key;
+                      XFile imageFile = entry.value;
+                      return Container(
+                        margin: const EdgeInsets.only(right: 8),
+                        child: Stack(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: kIsWeb
+                                  ? Image.network(
+                                      imageFile.path,
+                                      width: 100,
+                                      height: 100,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return FutureBuilder<Uint8List>(
+                                          future: imageFile.readAsBytes(),
+                                          builder: (context, snapshot) {
+                                            if (snapshot.hasData) {
+                                              return Image.memory(
+                                                snapshot.data!,
+                                                width: 100,
+                                                height: 100,
+                                                fit: BoxFit.cover,
+                                              );
+                                            }
+                                            return Container(
+                                              width: 100,
+                                              height: 100,
+                                              color: Colors.grey,
+                                              child: const Icon(Icons.image),
+                                            );
+                                          },
+                                        );
+                                      },
+                                    )
+                                  : Image.file(
+                                      File(imageFile.path),
+                                      width: 100,
+                                      height: 100,
+                                      fit: BoxFit.cover,
+                                    ),
+                            ),
+                            Positioned(
+                              top: 4,
+                              right: 4,
+                              child: GestureDetector(
+                                onTap: () => _removeNewImage(index),
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.red,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(Icons.close, color: Colors.white, size: 16),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ],
+                ),
+              ),
+              
+            if (_existingImageUrls.isEmpty && _selectedImages.isEmpty)
+              Container(
+                height: 100,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey.shade300, style: BorderStyle.solid),
+                ),
+                child: const Center(
+                  child: Text(
+                    'No images selected\nTap "Add Photos" to select images',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey),
+                  ),
                 ),
               ),
           ],
@@ -429,43 +559,144 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
     final images = await picker.pickMultiImage();
     if (images.isNotEmpty) {
       setState(() {
-        _selectedImages.addAll(images.map((xFile) => File(xFile.path)));
+        _selectedImages.addAll(images);
       });
     }
   }
-
-  void _removeImage(int index) {
+  
+  void _removeExistingImage(int index) {
+    setState(() => _existingImageUrls.removeAt(index));
+  }
+  
+  void _removeNewImage(int index) {
     setState(() => _selectedImages.removeAt(index));
   }
 
-  void _saveEvent() {
-    if (_formKey.currentState!.validate()) {
-      if (_selectedDate == null || _selectedTime == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select date and time')),
-        );
-        return;
+  Future<void> _saveEvent() async {
+    if (!_formKey.currentState!.validate()) return;
+    
+    if (_selectedDate == null || _selectedTime == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select date and time')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) {
+        throw Exception('User not authenticated');
       }
 
-      final eventData = {
-        'title': _titleController.text,
-        'description': _descriptionController.text,
-        'location': _locationController.text,
-        'date': _selectedDate,
-        'time': _selectedTime,
-        'category': _selectedCategory,
-        'tags': _tags,
-        'images': _selectedImages,
-        'isPaid': _isPaidEvent,
-        if (_isPaidEvent) ...{
-          'price': double.tryParse(_priceController.text) ?? 0,
-          'quantity': int.tryParse(_quantityController.text) ?? 0,
-        },
-        'selectedLocation': _selectedLocation,
-      };
+      // Upload images first if any
+      List<String> imageUrls = [];
+      if (_selectedImages.isNotEmpty) {
+        // Create a temporary event ID for image upload
+        final tempEventId = widget.event?.id ?? 'temp_${DateTime.now().millisecondsSinceEpoch}';
+        
+        try {
+          print('Starting image upload for ${_selectedImages.length} images...');
+          imageUrls = await _eventService.uploadEventImages(_selectedImages, tempEventId);
+          print('Image upload completed. Got ${imageUrls.length} URLs');
+        } catch (e) {
+          print('Image upload failed: $e');
+          
+          // Show user a choice: continue without images or retry
+          final shouldContinue = await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Image Upload Failed'),
+              content: Text(
+                'Failed to upload images: $e\n\n'
+                'Would you like to save the event without images, or cancel and try again?'
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: const Text('Save Without Images'),
+                ),
+              ],
+            ),
+          ) ?? false;
+          
+          if (!shouldContinue) {
+            return; // User chose to cancel
+          }
+          
+          // Continue without images
+          imageUrls = [];
+        }
+      }
 
-      // TODO: Save event data to backend/database
-      Navigator.pop(context, eventData);
+      // Merge with existing image URLs
+      final allImageUrls = [..._existingImageUrls, ...imageUrls];
+
+      // Create event model
+      final eventModel = EventModel(
+        id: widget.event?.id ?? '',
+        title: _titleController.text.trim(),
+        description: _descriptionController.text.trim(),
+        organizerId: currentUser.uid,
+        organizerName: currentUser.displayName ?? currentUser.email ?? 'Unknown',
+        eventDate: _selectedDate!,
+        eventTime: _selectedTime,
+        location: _locationController.text.trim(),
+        latitude: _selectedLocation?.latitude,
+        longitude: _selectedLocation?.longitude,
+        category: _selectedCategory,
+        tags: _tags,
+        imageUrls: allImageUrls,
+        ticketType: _isPaidEvent ? TicketType.paid : TicketType.free,
+        ticketPrice: _isPaidEvent ? double.tryParse(_priceController.text) : null,
+        maxAttendees: _isPaidEvent ? int.tryParse(_quantityController.text) : null,
+        createdAt: widget.event?.createdAt ?? DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+
+      String eventId;
+      if (widget.event == null) {
+        // Create new event
+        eventId = await _eventService.createEvent(eventModel);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Event created successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        // Update existing event
+        await _eventService.updateEvent(widget.event!.id, eventModel);
+        eventId = widget.event!.id;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Event updated successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+
+      // Return to previous screen with event data
+      Navigator.pop(context, eventId);
+
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error saving event: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 

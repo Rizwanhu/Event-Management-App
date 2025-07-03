@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'search_screen_widgets.dart';
 import '../data/search_screen_data.dart';
+import 'ProfileScreen.dart';
+import 'promote_event_page.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -10,6 +12,53 @@ class SearchScreen extends StatefulWidget {
 }
 
 class _SearchScreenState extends State<SearchScreen> {
+  int _currentIndex = 0;
+  
+  final List<Widget> _pages = [
+    const SearchEventsPage(),
+    const PromoteEventPage(),
+    const ProfileScreen(),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: _pages[_currentIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (index) => setState(() => _currentIndex = index),
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: Colors.deepPurple,
+        unselectedItemColor: Colors.grey,
+        backgroundColor: Colors.white,
+        elevation: 8,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.search),
+            label: 'Search',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.campaign),
+            label: 'Promote',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profile',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class SearchEventsPage extends StatefulWidget {
+  const SearchEventsPage({super.key});
+
+  @override
+  State<SearchEventsPage> createState() => _SearchEventsPageState();
+}
+
+class _SearchEventsPageState extends State<SearchEventsPage> {
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   
@@ -22,7 +71,6 @@ class _SearchScreenState extends State<SearchScreen> {
   bool _isLoadingMore = false;
   bool _hasMoreData = true;
   int _currentPage = 1;
-  static const int _pageSize = 10; // Made constant as it's not changing
   
   // Filter states
   String? _selectedCategory;
@@ -236,6 +284,7 @@ class _SearchScreenState extends State<SearchScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
+        automaticallyImplyLeading: false, // This removes the back button
         title: const Text(
           'Search Events',
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
