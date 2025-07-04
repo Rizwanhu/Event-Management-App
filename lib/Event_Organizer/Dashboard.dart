@@ -622,6 +622,8 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                   ],
                 ),
                 const SizedBox(height: 12),
+                
+                // Event details
                 const Text(
                   'Summer Music Festival 2024',
                   style: TextStyle(
@@ -951,7 +953,7 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                       const SizedBox(width: 12),
                       Expanded(
                         child: ElevatedButton.icon(
-                           onPressed: () => _editEvent(event),
+                          onPressed: () => _editEvent(event),
                           icon: const Icon(Icons.edit, size: 16),
                           label: const Text('Edit', style: TextStyle(fontSize: 13)),
                           style: ElevatedButton.styleFrom(
@@ -982,7 +984,7 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
-                          onPressed: () {},
+                          onPressed: () => _editEvent(event),
                           icon: const Icon(Icons.edit, size: 16),
                           label: const Text('Edit'),
                           style: ElevatedButton.styleFrom(

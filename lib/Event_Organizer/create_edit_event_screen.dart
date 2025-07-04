@@ -83,21 +83,7 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
         title: Text(widget.event == null ? 'Create Event' : 'Edit Event'),
         backgroundColor: Colors.deepPurple,
         foregroundColor: Colors.white,
-        actions: [
-          TextButton(
-            onPressed: _isLoading ? null : _saveEvent,
-            child: _isLoading 
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  ),
-                )
-              : const Text('SAVE', style: TextStyle(color: Colors.white)),
-          ),
-        ],
+        // No AppBar actions for save button, moved to FAB.
       ),
       body: Form(
         key: _formKey,
@@ -116,6 +102,40 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
             const SizedBox(height: 20),
             _buildTicketingSection(),
           ],
+        ),
+      ),
+      floatingActionButton: Align(
+        alignment: Alignment.bottomRight,
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 16.0, right: 16.0),
+          child: SizedBox(
+            height: 50,
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.deepPurple,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                elevation: 6,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+              onPressed: _isLoading ? null : _saveEvent,
+              icon: _isLoading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : const Icon(Icons.save, color: Colors.white),
+              label: Text(
+                widget.event == null ? 'Save' : 'Save Changes',
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
         ),
       ),
     );
