@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:io';
@@ -9,7 +8,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../Firebase/event_management_service.dart';
 import '../Models/event_model.dart';
-
+import 'package:flutter_map/flutter_map.dart' as flutter_map;
+import 'package:latlong2/latlong.dart' as latlong2;
 
 class CreateEditEventScreen extends StatefulWidget {
   final EventModel? event;
@@ -37,7 +37,7 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
   List<XFile> _selectedImages = [];
   List<String> _existingImageUrls = []; // For existing images when editing
   bool _isPaidEvent = false;
-  LatLng? _selectedLocation;
+  latlong2.LatLng? _selectedLocation;
   
   final List<String> _categories = [
     'Conference', 'Workshop', 'Seminar', 'Concert', 'Sports', 'Festival', 'Networking', 'Other'
@@ -70,7 +70,7 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
       _quantityController.text = event.maxAttendees?.toString() ?? '';
     }
     if (event.latitude != null && event.longitude != null) {
-      _selectedLocation = LatLng(event.latitude!, event.longitude!);
+      _selectedLocation = latlong2.LatLng(event.latitude!, event.longitude!);
     }
     // Set existing image URLs
     _existingImageUrls = List<String>.from(event.imageUrls);
@@ -214,56 +214,83 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
   }
 
   Widget _buildLocationSection() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Location', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _locationController,
-              decoration: const InputDecoration(
-                labelText: 'Location',
-                border: OutlineInputBorder(),
-                suffixIcon: Icon(Icons.location_on),
-              ),
-              validator: (value) => value?.isEmpty == true ? 'Location is required' : null,
-            ),
-            const SizedBox(height: 16),
-            Container(
-              height: 200,
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: GoogleMap(
-                onMapCreated: (GoogleMapController controller) {
-                  // Map controller for future use
-                },
-                initialCameraPosition: const CameraPosition(
-                  target: LatLng(37.4219983, -122.084),
-                  zoom: 14,
-                ),
-                onTap: (LatLng location) {
-                  setState(() {
-                    _selectedLocation = location;
-                  });
-                },
-                markers: _selectedLocation != null
-                    ? {
-                        Marker(
-                          markerId: const MarkerId('selected_location'),
-                          position: _selectedLocation!,
-                        ),
-                      }
-                    : {},
-              ),
-            ),
-          ],
+    Future<void> _updateLocationName(latlong2.LatLng point) async {
+      try {
+        final response = await http.get(Uri.parse(
+          'https://nominatim.openstreetmap.org/reverse?format=json&lat=${point.latitude}&lon=${point.longitude}&zoom=18&addressdetails=1'
+        ));
+        
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+          final address = data['display_name'] ?? '${point.latitude.toStringAsFixed(4)}, ${point.longitude.toStringAsFixed(4)}';
+          _locationController.text = address;
+        }
+      } catch (e) {
+        _locationController.text = '${point.latitude.toStringAsFixed(4)}, ${point.longitude.toStringAsFixed(4)}';
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Location',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
-      ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: _locationController,
+          decoration: const InputDecoration(
+            labelText: 'Event Location',
+            border: OutlineInputBorder(),
+          ),
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Please enter event location';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          height: 300,
+          child: flutter_map.FlutterMap(
+            options: flutter_map.MapOptions(
+              center: _selectedLocation ?? const latlong2.LatLng(0, 0),
+              zoom: 13.0,
+              onTap: (tapPosition, point) async {
+                setState(() {
+                  _selectedLocation = point;
+                });
+                await _updateLocationName(point);
+              },
+            ),
+            children: [
+              flutter_map.TileLayer(
+                urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                subdomains: const ['a', 'b', 'c'],
+              ),
+              if (_selectedLocation != null)
+                flutter_map.MarkerLayer(
+                  markers: [
+                    flutter_map.Marker(
+                      point: _selectedLocation!,
+                      width: 40,
+                      height: 40,
+                      builder: (ctx) => const Icon(Icons.location_pin, color: Colors.red, size: 40),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        if (_selectedLocation != null)
+          Text(
+            'Selected location: ${_selectedLocation!.latitude.toStringAsFixed(4)}, ${_selectedLocation!.longitude.toStringAsFixed(4)}',
+            style: const TextStyle(fontSize: 12, color: Colors.grey),
+          ),
+      ],
     );
   }
 
