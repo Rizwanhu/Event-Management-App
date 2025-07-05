@@ -246,7 +246,7 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
           height: 300,
           child: flutter_map.FlutterMap(
             options: flutter_map.MapOptions(
-              center: _selectedLocation ?? const latlong2.LatLng(0, 0),
+              center: _selectedLocation ?? const latlong2.LatLng(31.5204, 74.3587),
               zoom: 13.0,
               onTap: (tapPosition, point) {
                 setState(() {
