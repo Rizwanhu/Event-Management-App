@@ -168,7 +168,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Colors.teal.shade50,
       body: CustomScrollView(
         slivers: [
           // App Bar with Profile Header
@@ -176,7 +176,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             expandedHeight: 200,
             floating: false,
             pinned: true,
-            backgroundColor: Colors.deepPurple,
+            backgroundColor: Colors.teal,
             automaticallyImplyLeading: false, // This removes the back button
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
@@ -184,7 +184,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [Colors.deepPurple, Colors.deepPurple.shade300],
+                    colors: [Colors.teal, Colors.teal.shade300],
                   ),
                 ),
                 child: SafeArea(
@@ -198,7 +198,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         backgroundColor: Colors.white,
                         child: CircleAvatar(
                           radius: 47,
-                          backgroundColor: Colors.grey[300],
+                          backgroundColor: Colors.teal.shade100,
                           child: Text(
                             _currentUser?.firstName.isNotEmpty == true 
                                 ? _currentUser!.firstName[0].toUpperCase()
@@ -206,7 +206,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             style: const TextStyle(
                               fontSize: 40,
                               fontWeight: FontWeight.bold,
-                              color: Colors.deepPurple,
+                              color: Colors.teal,
                             ),
                           ),
                         ),
@@ -304,11 +304,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.teal.shade50,
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.teal.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.teal.withOpacity(0.1),
             blurRadius: 5,
             offset: const Offset(0, 2),
           ),
@@ -337,7 +338,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           style: const TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: Colors.deepPurple,
+            color: Colors.teal,
           ),
         ),
         const SizedBox(height: 4),
@@ -346,7 +347,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 12,
-            color: Colors.grey[600],
+            color: Colors.teal.shade700,
           ),
         ),
       ],
@@ -357,7 +358,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Container(
       height: 30,
       width: 1,
-      color: Colors.grey[300],
+      color: Colors.teal.shade300,
     );
   }
 
@@ -365,11 +366,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.teal.shade50,
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.teal.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.teal.withOpacity(0.1),
             blurRadius: 5,
             offset: const Offset(0, 2),
           ),
@@ -378,11 +380,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'About',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
+              color: Colors.teal.shade800,
             ),
           ),
           const SizedBox(height: 8),
@@ -390,20 +393,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _userProfile['bio'],
             style: TextStyle(
               fontSize: 14,
-              color: Colors.grey[700],
+              color: Colors.teal.shade700,
               height: 1.4,
             ),
           ),
           const SizedBox(height: 12),
           Row(
             children: [
-              Icon(Icons.location_on, size: 16, color: Colors.grey[600]),
+              Icon(Icons.location_on, size: 16, color: Colors.teal.shade600),
               const SizedBox(width: 4),
-              Text(_userProfile['location'], style: TextStyle(color: Colors.grey[600])),
+              Text(_userProfile['location'], style: TextStyle(color: Colors.teal.shade600)),
               const SizedBox(width: 16),
-              Icon(Icons.calendar_today, size: 16, color: Colors.grey[600]),
+              Icon(Icons.calendar_today, size: 16, color: Colors.teal.shade600),
               const SizedBox(width: 4),
-              Text('Joined ${_userProfile['joinDate']}', style: TextStyle(color: Colors.grey[600])),
+              Text('Joined ${_userProfile['joinDate']}', style: TextStyle(color: Colors.teal.shade600)),
             ],
           ),
         ],
@@ -415,11 +418,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.teal.shade50,
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.teal.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.teal.withOpacity(0.1),
             blurRadius: 5,
             offset: const Offset(0, 2),
           ),
@@ -428,11 +432,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Quick Actions',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
+              color: Colors.teal.shade800,
             ),
           ),
           const SizedBox(height: 12),
@@ -442,25 +447,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _buildActionButton(
                 'Edit Profile',
                 Icons.edit,
-                Colors.blue,
+                Colors.teal,
                 () => _navigateToEditProfile(context),
               ),
               _buildActionButton(
                 'My Events',
                 Icons.event,
-                Colors.green,
+                Colors.teal.shade600,
                 () => _navigateToMyEvents(context),
               ),
               _buildActionButton(
                 'Bookmarks',
                 Icons.bookmark,
-                Colors.orange,
+                Colors.teal.shade700,
                 () => _navigateToBookmarks(context),
               ),
               _buildActionButton(
                 'Analytics',
                 Icons.analytics,
-                Colors.purple,
+                Colors.teal.shade800,
                 () => _navigateToAnalytics(context),
               ),
             ],
@@ -486,7 +491,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 6),
           Text(
             label,
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+            style: TextStyle(
+              fontSize: 12, 
+              fontWeight: FontWeight.w500,
+              color: Colors.teal.shade800,
+            ),
           ),
         ],
       ),
@@ -499,11 +508,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.teal.shade50,
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.teal.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.teal.withOpacity(0.1),
             blurRadius: 5,
             offset: const Offset(0, 2),
           ),
@@ -512,11 +522,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Interests',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
+              color: Colors.teal.shade800,
             ),
           ),
           const SizedBox(height: 12),
@@ -524,17 +535,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.grey.withOpacity(0.1),
+                color: Colors.teal.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.info_outline, color: Colors.grey[600]),
+                  Icon(Icons.info_outline, color: Colors.teal.shade600),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'No interests selected yet. Edit your profile to add interests!',
-                      style: TextStyle(color: Colors.grey[600]),
+                      style: TextStyle(color: Colors.teal.shade600),
                     ),
                   ),
                 ],
@@ -548,14 +559,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 return Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.deepPurple.withOpacity(0.1),
+                    color: Colors.teal.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.deepPurple.withOpacity(0.3)),
+                    border: Border.all(color: Colors.teal.withOpacity(0.3)),
                   ),
                   child: Text(
                     interest,
                     style: const TextStyle(
-                      color: Colors.deepPurple,
+                      color: Colors.teal,
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                     ),
@@ -572,11 +583,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.teal.shade50,
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.teal.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.teal.withOpacity(0.1),
             blurRadius: 5,
             offset: const Offset(0, 2),
           ),
@@ -588,16 +600,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Achievements',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
+                  color: Colors.teal.shade800,
                 ),
               ),
               TextButton(
                 onPressed: () => _navigateToAchievements(context),
-                child: const Text('View All'),
+                child: Text(
+                  'View All',
+                  style: TextStyle(color: Colors.teal.shade700),
+                ),
               ),
             ],
           ),
@@ -607,13 +623,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
               margin: const EdgeInsets.only(bottom: 8),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.amber.withOpacity(0.1),
+                color: Colors.teal.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.amber.withOpacity(0.3)),
+                border: Border.all(color: Colors.teal.withOpacity(0.3)),
               ),
               child: Row(
                 children: [
-                  Icon(achievement['icon'], color: Colors.amber, size: 24),
+                  Icon(achievement['icon'], color: Colors.teal, size: 24),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -621,11 +637,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       children: [
                         Text(
                           achievement['title'],
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold, 
+                            fontSize: 14,
+                            color: Colors.teal.shade800,
+                          ),
                         ),
                         Text(
                           achievement['description'],
-                          style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                          style: TextStyle(
+                            color: Colors.teal.shade600, 
+                            fontSize: 12,
+                          ),
                         ),
                       ],
                     ),
@@ -643,11 +666,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.teal.shade50,
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.teal.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.teal.withOpacity(0.1),
             blurRadius: 5,
             offset: const Offset(0, 2),
           ),
@@ -659,16 +683,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Recent Activity',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
+                  color: Colors.teal.shade800,
                 ),
               ),
               TextButton(
                 onPressed: () => _navigateToActivity(context),
-                child: const Text('View All'),
+                child: Text(
+                  'View All',
+                  style: TextStyle(color: Colors.teal.shade700),
+                ),
               ),
             ],
           ),
@@ -678,7 +706,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               margin: const EdgeInsets.only(bottom: 8),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.grey.withOpacity(0.05),
+                color: Colors.teal.withOpacity(0.05),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -686,12 +714,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      color: Colors.deepPurple.withOpacity(0.1),
+                      color: Colors.teal.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: const Icon(
                       Icons.history,
-                      color: Colors.deepPurple,
+                      color: Colors.teal,
                       size: 16,
                     ),
                   ),
@@ -702,11 +730,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       children: [
                         Text(
                           '${activity['action']} ${activity['event']}',
-                          style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w500, 
+                            fontSize: 14,
+                            color: Colors.teal.shade800,
+                          ),
                         ),
                         Text(
                           activity['date'],
-                          style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                          style: TextStyle(
+                            color: Colors.teal.shade600, 
+                            fontSize: 12,
+                          ),
                         ),
                       ],
                     ),
@@ -727,7 +762,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: ElevatedButton(
         onPressed: () => _navigateToEditProfile(context),
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.deepPurple,
+          backgroundColor: Colors.teal,
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(

@@ -345,6 +345,7 @@ class _SignUpPageState extends State<SignUpPage> with TickerProviderStateMixin {
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
                   filled: true,
                   fillColor: Colors.white,
+                  floatingLabelBehavior: FloatingLabelBehavior.never,
                 ),
                 validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
               ),
@@ -359,6 +360,7 @@ class _SignUpPageState extends State<SignUpPage> with TickerProviderStateMixin {
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
                   filled: true,
                   fillColor: Colors.white,
+                  floatingLabelBehavior: FloatingLabelBehavior.never,
                 ),
                 validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
               ),
@@ -375,6 +377,7 @@ class _SignUpPageState extends State<SignUpPage> with TickerProviderStateMixin {
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
             filled: true,
             fillColor: Colors.white,
+            floatingLabelBehavior: FloatingLabelBehavior.never,
           ),
           validator: (value) {
             if (value?.isEmpty ?? true) return 'Required';
@@ -394,6 +397,7 @@ class _SignUpPageState extends State<SignUpPage> with TickerProviderStateMixin {
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
             filled: true,
             fillColor: Colors.white,
+            floatingLabelBehavior: FloatingLabelBehavior.never,
           ),
           validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
         ),
@@ -411,6 +415,7 @@ class _SignUpPageState extends State<SignUpPage> with TickerProviderStateMixin {
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
             filled: true,
             fillColor: Colors.white,
+            floatingLabelBehavior: FloatingLabelBehavior.never,
           ),
           validator: (value) {
             if (value?.isEmpty ?? true) return 'Required';
@@ -432,6 +437,7 @@ class _SignUpPageState extends State<SignUpPage> with TickerProviderStateMixin {
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
             filled: true,
             fillColor: Colors.white,
+            floatingLabelBehavior: FloatingLabelBehavior.never,
           ),
           validator: (value) {
             if (value?.isEmpty ?? true) return 'Required';
@@ -469,6 +475,7 @@ class _SignUpPageState extends State<SignUpPage> with TickerProviderStateMixin {
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
                 filled: true,
                 fillColor: Colors.white,
+                floatingLabelBehavior: FloatingLabelBehavior.never,
               ),
               validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
             ),
@@ -511,6 +518,7 @@ class _SignUpPageState extends State<SignUpPage> with TickerProviderStateMixin {
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
             filled: true,
             fillColor: Colors.white,
+            floatingLabelBehavior: FloatingLabelBehavior.never,
           ),
           validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
         ),
@@ -523,6 +531,7 @@ class _SignUpPageState extends State<SignUpPage> with TickerProviderStateMixin {
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
             filled: true,
             fillColor: Colors.white,
+            floatingLabelBehavior: FloatingLabelBehavior.never,
           ),
           validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
         ),
@@ -535,6 +544,7 @@ class _SignUpPageState extends State<SignUpPage> with TickerProviderStateMixin {
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
             filled: true,
             fillColor: Colors.white,
+            floatingLabelBehavior: FloatingLabelBehavior.never,
           ),
         ),
         const SizedBox(height: 20),
@@ -546,6 +556,7 @@ class _SignUpPageState extends State<SignUpPage> with TickerProviderStateMixin {
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
             filled: true,
             fillColor: Colors.white,
+            floatingLabelBehavior: FloatingLabelBehavior.never,
           ),
           keyboardType: TextInputType.number,
           validator: (value) => value?.isEmpty ?? true ? 'Required' : null,

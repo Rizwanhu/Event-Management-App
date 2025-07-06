@@ -54,9 +54,10 @@ class _PromoteEventPageState extends State<PromoteEventPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.teal.shade50, // Added teal background to main scaffold
       appBar: AppBar(
         title: const Text('Promote Event'),
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.teal.shade50,
         foregroundColor: Colors.black,
         elevation: 0,
         automaticallyImplyLeading: false, // This removes the back button
@@ -71,9 +72,9 @@ class _PromoteEventPageState extends State<PromoteEventPage> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade50,
+                  color: Colors.white, // Changed to white for contrast against teal background
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.shade200),
+                  border: Border.all(color: Colors.teal.shade200),
                 ),
                 child: Row(
                   children: [
@@ -82,12 +83,12 @@ class _PromoteEventPageState extends State<PromoteEventPage> {
                       width: 80,
                       height: 80,
                       decoration: BoxDecoration(
-                        color: Colors.grey.shade300,
+                        color: Colors.teal.shade50,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Icon(
                         Icons.image,
-                        color: Colors.grey,
+                        color: Colors.teal,
                         size: 32,
                       ),
                     ),
@@ -166,8 +167,9 @@ class _PromoteEventPageState extends State<PromoteEventPage> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
+                  color: Colors.white, // Changed to white for contrast
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.teal.shade200),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -176,7 +178,7 @@ class _PromoteEventPageState extends State<PromoteEventPage> {
                       children: [
                         Icon(
                           Icons.info_outline,
-                          color: Colors.blue.shade700,
+                          color: Colors.teal.shade700,
                         ),
                         const SizedBox(width: 8),
                         Text(
@@ -184,7 +186,7 @@ class _PromoteEventPageState extends State<PromoteEventPage> {
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: Colors.blue.shade700,
+                            color: Colors.teal.shade700,
                           ),
                         ),
                       ],
@@ -225,7 +227,7 @@ class _PromoteEventPageState extends State<PromoteEventPage> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade50,
+                      color: Colors.teal.shade50,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
@@ -245,10 +247,10 @@ class _PromoteEventPageState extends State<PromoteEventPage> {
                         const Spacer(),
                         Text(
                           _getSelectedTierPrice(),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: Colors.deepPurple,
+                            color: Colors.teal.shade700,
                           ),
                         ),
                       ],
@@ -264,7 +266,7 @@ class _PromoteEventPageState extends State<PromoteEventPage> {
                         _showPaymentDialog();
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.deepPurple,
+                        backgroundColor: Colors.teal.shade700,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
@@ -307,10 +309,10 @@ class _PromoteEventPageState extends State<PromoteEventPage> {
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.deepPurple.shade50 : Colors.white,
+          color: isSelected ? Colors.teal.shade100 : Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? Colors.deepPurple : Colors.grey.shade300,
+            color: isSelected ? Colors.teal.shade700 : Colors.grey.shade300,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -339,7 +341,7 @@ class _PromoteEventPageState extends State<PromoteEventPage> {
                 if (isSelected)
                   Icon(
                     Icons.check_circle,
-                    color: Colors.deepPurple,
+                    color: Colors.teal.shade700,
                   ),
               ],
             ),
@@ -351,10 +353,10 @@ class _PromoteEventPageState extends State<PromoteEventPage> {
               children: [
                 Text(
                   tier['price'],
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
-                    color: Colors.deepPurple,
+                    color: Colors.teal.shade700,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -407,7 +409,7 @@ class _PromoteEventPageState extends State<PromoteEventPage> {
         children: [
           Icon(
             Icons.star,
-            color: Colors.blue.shade700,
+            color: Colors.teal.shade700,
             size: 16,
           ),
           const SizedBox(width: 8),
@@ -416,7 +418,7 @@ class _PromoteEventPageState extends State<PromoteEventPage> {
               text,
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.blue.shade700,
+                color: Colors.teal.shade700,
               ),
             ),
           ),
@@ -470,7 +472,7 @@ class _PromoteEventPageState extends State<PromoteEventPage> {
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepPurple,
+                backgroundColor: Colors.teal.shade700,
                 foregroundColor: Colors.white,
               ),
               child: const Text('Pay Now'),

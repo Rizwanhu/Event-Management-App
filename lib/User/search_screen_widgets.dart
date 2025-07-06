@@ -14,14 +14,14 @@ class SearchScreenWidgets {
   }) {
     return Container(
       padding: const EdgeInsets.all(16),
-      color: Colors.white,
+      color: Colors.teal.shade50,
       child: Column(
         children: [
           TextField(
             controller: controller,
             decoration: InputDecoration(
               hintText: 'Search events, categories, locations...',
-              prefixIcon: const Icon(Icons.search, color: Colors.deepPurple),
+              prefixIcon: const Icon(Icons.search, color: Colors.teal),
               suffixIcon: searchQuery.isNotEmpty
                   ? IconButton(
                       icon: const Icon(Icons.clear),
@@ -30,14 +30,14 @@ class SearchScreenWidgets {
                   : null,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey[300]!),
+                borderSide: BorderSide(color: Colors.teal.shade50,),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Colors.deepPurple),
+                borderSide: BorderSide(color: Colors.teal),
               ),
               filled: true,
-              fillColor: Colors.grey[50],
+              fillColor: Colors.teal.shade50,
             ),
           ),
           if (suggestions.isNotEmpty) _buildSuggestions(suggestions, onSuggestionTap),
@@ -50,11 +50,11 @@ class SearchScreenWidgets {
     return Container(
       margin: const EdgeInsets.only(top: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.teal.shade50,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
+            color: Colors.teal.shade50,
             blurRadius: 5,
             offset: const Offset(0, 2),
           ),
@@ -62,7 +62,7 @@ class SearchScreenWidgets {
       child: Column(
         children: suggestions.map((suggestion) {
           return ListTile(
-            leading: const Icon(Icons.search, color: Colors.grey),
+            leading: const Icon(Icons.search, color: Colors.teal),
             title: Text(suggestion),
             onTap: () => onSuggestionTap(suggestion),
           );
@@ -88,7 +88,7 @@ class SearchScreenWidgets {
   }) {
     return Container(
       padding: const EdgeInsets.all(16),
-      color: Colors.white,
+      color: Colors.teal.shade50,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -101,7 +101,7 @@ class SearchScreenWidgets {
               ),
               TextButton(
                 onPressed: onClearFilters,
-                child: const Text('Clear All'),
+                child: const Text('Clear All'), 
               ),
             ],
           ),
@@ -191,7 +191,7 @@ class SearchScreenWidgets {
           min: 0,
           max: 1000,
           divisions: 20,
-          activeColor: Colors.deepPurple,
+          activeColor: Colors.teal,
           onChanged: onPriceRangeChanged,
           onChangeEnd: onPriceRangeChangeEnd,
         ),
@@ -253,7 +253,7 @@ class SearchScreenWidgets {
       children: [
         Container(
           padding: const EdgeInsets.all(16),
-          color: Colors.white,
+          color:Colors.teal.shade50,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -264,7 +264,7 @@ class SearchScreenWidgets {
               if (searchQuery.isNotEmpty)
                 Text(
                   'for "$searchQuery"',
-                  style: TextStyle(color: Colors.grey[600]),
+                  style: TextStyle(color: Colors.teal.shade50,),
                 ),
             ],
           ),
@@ -349,11 +349,11 @@ class SearchScreenWidgets {
         child: Container(
           margin: const EdgeInsets.only(bottom: 16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Colors.teal.shade50,
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: Colors.grey.withOpacity(0.1),
+                color: Colors.teal.shade50,
                 blurRadius: 5,
                 offset: const Offset(0, 2),
               ),
@@ -372,7 +372,7 @@ class SearchScreenWidgets {
                   errorBuilder: (context, error, stackTrace) {
                     return Container(
                       height: 150,
-                      color: Colors.grey[300],
+                      color: Colors.teal.shade50,
                       child: const Icon(Icons.image, size: 50),
                     );
                   },
@@ -398,7 +398,7 @@ class SearchScreenWidgets {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: Colors.deepPurple.withOpacity(0.1),
+                            color: Colors.teal.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(

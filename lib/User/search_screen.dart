@@ -28,9 +28,9 @@ class _SearchScreenState extends State<SearchScreen> {
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: Colors.deepPurple,
+        selectedItemColor: Colors.teal,
         unselectedItemColor: Colors.grey,
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.teal.shade50,
         elevation: 8,
         items: const [
           BottomNavigationBarItem(
@@ -280,20 +280,20 @@ class _SearchEventsPageState extends State<SearchEventsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Colors.teal,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.teal,
         elevation: 0,
         automaticallyImplyLeading: false, // This removes the back button
         title: const Text(
           'Search Events',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         actions: [
           IconButton(
             icon: Icon(
               _showFilters ? Icons.filter_list_off : Icons.filter_list,
-              color: Colors.deepPurple,
+              color: Colors.white,
             ),
             onPressed: () => setState(() => _showFilters = !_showFilters),
           ),
