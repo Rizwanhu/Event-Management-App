@@ -22,6 +22,22 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
   List<EventModel> events = [];
   Map<String, dynamic> _statistics = {};
 
+  final ColorScheme _colorScheme = ColorScheme.light(
+    primary: Colors.blue.shade700,
+    primaryContainer: Colors.blue.shade200,
+    secondary: Colors.blueAccent,
+    secondaryContainer: Colors.blueAccent.shade100,
+    surface: Colors.white,
+    background: Colors.blue.shade50,
+    error: Colors.red,
+    onPrimary: Colors.white,
+    onSecondary: Colors.white,
+    onSurface: Colors.black,
+    onBackground: Colors.black,
+    onError: Colors.white,
+    brightness: Brightness.light,
+  );
+
   @override
   void initState() {
     super.initState();
@@ -113,22 +129,22 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: _colorScheme.background,
       appBar: AppBar(
         title: const Text(
           'Organizer Dashboard',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
-        automaticallyImplyLeading: false, // This removes the back button
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(
-            height: 1,
-            color: Colors.grey.shade200,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+            color: Colors.white,
           ),
+        ),
+        backgroundColor: _colorScheme.primary,
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(1),
+          child: Divider(height: 1, thickness: 1),
         ),
         actions: [
           StreamBuilder<int>(
@@ -192,12 +208,12 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
         children: [
           // Navigation Tabs
           Container(
-            color: Colors.white,
+            color: _colorScheme.surface,
             child: TabBar(
               controller: _tabController,
-              labelColor: Colors.deepPurple,
-              unselectedLabelColor: Colors.grey,
-              indicatorColor: Colors.deepPurple,
+              labelColor: _colorScheme.primary,
+              unselectedLabelColor: _colorScheme.onSurface,
+              indicatorColor: _colorScheme.primary,
               tabs: const [
                 Tab(text: 'Overview'),
                 Tab(text: 'Events'),
@@ -223,7 +239,7 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showCreateEventDialog(),
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: _colorScheme.primary,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
         label: const Text('Create Event'),
@@ -248,7 +264,7 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [Colors.deepPurple.shade400, Colors.purple.shade500],
+                colors: [_colorScheme.primary, _colorScheme.primaryContainer],
               ),
               borderRadius: BorderRadius.circular(16),
             ),
@@ -260,20 +276,20 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'Welcome back!',
                             style: TextStyle(
-                              color: Colors.white,
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
+                              color: Colors.white,
                             ),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             'Manage your events and track performance',
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.9),
                               fontSize: 13,
+                              color: Colors.white.withOpacity(0.9),
                             ),
                           ),
                         ],
@@ -286,7 +302,7 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
-                        Icons.event_available,
+                        Icons.person,
                         color: Colors.white,
                         size: 28,
                       ),
@@ -318,25 +334,25 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                     'Total Events',
                     '$totalEvents',
                     Icons.event,
-                    Colors.blue,
+                    _colorScheme.primary,
                   ),
                   _buildStatCard(
                     'Tickets Sold',
                     '$totalTicketsSold',
                     Icons.confirmation_number,
-                    Colors.green,
+                    _colorScheme.secondary,
                   ),
                   _buildStatCard(
                     'Upcoming',
                     '$upcomingEvents',
                     Icons.schedule,
-                    Colors.orange,
+                    _colorScheme.surface,
                   ),
                   _buildStatCard(
                     'Revenue',
                     '\$${totalRevenue.toStringAsFixed(0)}',
                     Icons.attach_money,
-                    Colors.purple,
+                    _colorScheme.primary,
                   ),
                 ],
               );
@@ -349,10 +365,10 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
                   'Recent Events',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
@@ -383,7 +399,7 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
         // Filter Bar - Mobile responsive
         Container(
           padding: const EdgeInsets.all(16),
-          color: Colors.white,
+          color: _colorScheme.surface,
           child: Column(
             children: [
               // Search and Filter Row
@@ -397,7 +413,7 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                         prefixIcon: const Icon(Icons.search, size: 20),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey.shade300),
+                          borderSide: BorderSide(color: _colorScheme.onSurface.withOpacity(0.3)),
                         ),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         isDense: true,
@@ -410,7 +426,7 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                     child: Container(
                       height: 40,
                       decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey.shade300),
+                        border: Border.all(color: _colorScheme.onSurface.withOpacity(0.3)),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Center(
@@ -464,11 +480,11 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: _colorScheme.surface,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: _colorScheme.onSurface.withOpacity(0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 2),
                 ),
@@ -477,9 +493,9 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Revenue Overview',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
@@ -502,8 +518,8 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                   alignment: WrapAlignment.center,
                   spacing: 20,
                   children: [
-                    _buildChartLegend('This Month', Colors.deepPurple),
-                    _buildChartLegend('Last Month', Colors.grey),
+                    _buildChartLegend('This Month', _colorScheme.primary),
+                    _buildChartLegend('Last Month', _colorScheme.onSurface),
                   ],
                 ),
               ],
@@ -525,7 +541,7 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                             'Conversion Rate',
                             '24.5%',
                             '+2.1%',
-                            Colors.green,
+                            _colorScheme.primary,
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -534,7 +550,7 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                             'Avg. Rating',
                             '4.2',
                             '+0.3',
-                            Colors.amber,
+                            _colorScheme.secondary,
                           ),
                         ),
                       ],
@@ -547,7 +563,7 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                             'Total Views',
                             '12.4K',
                             '+15%',
-                            Colors.blue,
+                            _colorScheme.surface,
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -556,7 +572,7 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                             'Engagement',
                             '8.7%',
                             '+1.2%',
-                            Colors.purple,
+                            _colorScheme.primary,
                           ),
                         ),
                       ],
@@ -566,13 +582,13 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
               } else {
                 return Column(
                   children: [
-                    _buildMetricCard('Conversion Rate', '24.5%', '+2.1%', Colors.green),
+                    _buildMetricCard('Conversion Rate', '24.5%', '+2.1%', _colorScheme.primary),
                     const SizedBox(height: 12),
-                    _buildMetricCard('Avg. Rating', '4.2', '+0.3', Colors.amber),
+                    _buildMetricCard('Avg. Rating', '4.2', '+0.3', _colorScheme.secondary),
                     const SizedBox(height: 12),
-                    _buildMetricCard('Total Views', '12.4K', '+15%', Colors.blue),
+                    _buildMetricCard('Total Views', '12.4K', '+15%', _colorScheme.surface),
                     const SizedBox(height: 12),
-                    _buildMetricCard('Engagement', '8.7%', '+1.2%', Colors.purple),
+                    _buildMetricCard('Engagement', '8.7%', '+1.2%', _colorScheme.primary),
                   ],
                 );
               }
@@ -598,7 +614,7 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [Colors.amber.shade400, Colors.orange.shade500],
+                colors: [_colorScheme.primary, _colorScheme.primaryContainer],
               ),
               borderRadius: BorderRadius.circular(16),
             ),
@@ -613,9 +629,9 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                       child: Text(
                         'Top Performing Event',
                         style: TextStyle(
-                          color: Colors.white,
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
+                          color: Colors.white,
                         ),
                       ),
                     ),
@@ -627,17 +643,17 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                 const Text(
                   'Summer Music Festival 2024',
                   style: TextStyle(
-                    color: Colors.white,
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
+                    color: Colors.white,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   '245 tickets sold • 4.2★ rating • \$18,750 revenue',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.9),
                     fontSize: 13,
+                    color: Colors.white.withOpacity(0.9),
                   ),
                 ),
               ],
@@ -691,25 +707,25 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                   _buildActionCard(
                     'Boost Event',
                     Icons.trending_up,
-                    Colors.green,
+                    _colorScheme.primary,
                     () => _showBoostEventDialog(),
                   ),
                   _buildActionCard(
                     'View Analytics',
                     Icons.analytics,
-                    Colors.blue,
+                    _colorScheme.primary,
                     () => _tabController.animateTo(2),
                   ),
                   _buildActionCard(
                     'Export Data',
                     Icons.download,
-                    Colors.purple,
+                    _colorScheme.primary,
                     () {},
                   ),
                   _buildActionCard(
                     'Settings',
                     Icons.settings,
-                    Colors.grey,
+                    _colorScheme.onSurface,
                     () {},
                   ),
                 ],
@@ -728,11 +744,11 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: _colorScheme.onSurface.withOpacity(0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -773,7 +789,7 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
               title,
               style: TextStyle(
                 fontSize: 11,
-                color: Colors.grey.shade600,
+                color: _colorScheme.onSurface,
               ),
               overflow: TextOverflow.ellipsis,
             ),
@@ -788,11 +804,11 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: _colorScheme.onSurface.withOpacity(0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -813,7 +829,7 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                     borderRadius: BorderRadius.circular(8),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
+                        color: _colorScheme.onSurface.withOpacity(0.1),
                         blurRadius: 4,
                         offset: const Offset(0, 2),
                       ),
@@ -827,7 +843,7 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                       loadingBuilder: (context, child, loadingProgress) {
                         if (loadingProgress == null) return child;
                         return Container(
-                          color: Colors.grey.shade200,
+                          color: _colorScheme.surface,
                           child: const Center(
                             child: CircularProgressIndicator(strokeWidth: 2),
                           ),
@@ -860,7 +876,7 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                       '${event.eventDate.day}/${event.eventDate.month}/${event.eventDate.year}',
                       style: TextStyle(
                         fontSize: 13,
-                        color: Colors.grey.shade600,
+                        color: _colorScheme.onSurface,
                       ),
                     ),
                   ],
@@ -923,10 +939,10 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
               spacing: 12,
               runSpacing: 6,
               children: [
-                _buildSocialStat(Icons.people, event.currentAttendees.toString(), Colors.blue),
-                _buildSocialStat(Icons.category, event.category, Colors.green),
-                _buildSocialStat(Icons.schedule, _formatEventTime(event), Colors.orange),
-                _buildSocialStat(Icons.location_on, event.location.split(',').first, Colors.red),
+                _buildSocialStat(Icons.people, event.currentAttendees.toString(), _colorScheme.primary),
+                _buildSocialStat(Icons.category, event.category, _colorScheme.secondary),
+                _buildSocialStat(Icons.schedule, _formatEventTime(event), _colorScheme.surface),
+                _buildSocialStat(Icons.location_on, event.location.split(',').first, _colorScheme.primary),
               ],
             ),
             
@@ -944,8 +960,8 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                           icon: const Icon(Icons.trending_up, size: 16),
                           label: const Text('Boost', style: TextStyle(fontSize: 13)),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.green,
-                            side: const BorderSide(color: Colors.green),
+                            foregroundColor: _colorScheme.primary,
+                            side: BorderSide(color: _colorScheme.primary),
                             padding: const EdgeInsets.symmetric(vertical: 8),
                           ),
                         ),
@@ -957,7 +973,7 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                           icon: const Icon(Icons.edit, size: 16),
                           label: const Text('Edit', style: TextStyle(fontSize: 13)),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.deepPurple,
+                            backgroundColor: _colorScheme.primary,
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 8),
                           ),
@@ -975,8 +991,8 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                           icon: const Icon(Icons.trending_up, size: 16),
                           label: const Text('Boost'),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.green,
-                            side: const BorderSide(color: Colors.green),
+                            foregroundColor: _colorScheme.primary,
+                            side: BorderSide(color: _colorScheme.primary),
                           ),
                         ),
                       ),
@@ -988,7 +1004,7 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                           icon: const Icon(Icons.edit, size: 16),
                           label: const Text('Edit'),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.deepPurple,
+                            backgroundColor: _colorScheme.primary,
                             foregroundColor: Colors.white,
                           ),
                         ),
@@ -1008,11 +1024,11 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: _colorScheme.onSurface.withOpacity(0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -1025,7 +1041,7 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
             title,
             style: TextStyle(
               fontSize: 13,
-              color: Colors.grey.shade600,
+              color: _colorScheme.onSurface,
             ),
             overflow: TextOverflow.ellipsis,
           ),
@@ -1113,9 +1129,9 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: _colorScheme.onSurface),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1124,7 +1140,7 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
             children: [
               CircleAvatar(
                 radius: 16,
-                backgroundColor: Colors.deepPurple,
+                backgroundColor: _colorScheme.primary,
                 child: Text(
                   review['name'].toString()[0],
                   style: const TextStyle(
@@ -1151,7 +1167,7 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                         final int rating = review['rating'] as int;
                         return Icon(
                           i < rating ? Icons.star : Icons.star_border,
-                          color: Colors.amber,
+                          color: _colorScheme.primary,
                           size: 16,
                         );
                       }),
@@ -1171,7 +1187,7 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
             review['event'].toString(),
             style: TextStyle(
               fontSize: 12,
-              color: Colors.grey.shade600,
+              color: _colorScheme.onSurface,
             ),
           ),
         ],
@@ -1255,7 +1271,7 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
           title,
           style: TextStyle(
             fontSize: 12,
-            color: Colors.grey.shade600,
+            color: _colorScheme.onSurface,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -1272,8 +1288,8 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
           LinearProgressIndicator(
             value: progress.clamp(0.0, 1.0),
             minHeight: 5,
-            backgroundColor: Colors.grey.shade200,
-            color: Colors.deepPurple,
+            backgroundColor: _colorScheme.onSurface.withOpacity(0.2),
+            color: _colorScheme.primary,
           ),
         ],
       ],
@@ -1346,19 +1362,19 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
     switch (status) {
       case EventStatus.pending:
         label = 'Pending';
-        color = Colors.orange;
+        color = _colorScheme.surface;
         break;
       case EventStatus.approved:
         label = 'Approved';
-        color = Colors.blue;
+        color = _colorScheme.primary;
         break;
       case EventStatus.live:
         label = 'Live';
-        color = Colors.green;
+        color = _colorScheme.primary;
         break;
       default:
         label = 'Unknown';
-        color = Colors.grey;
+        color = _colorScheme.onSurface;
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -1408,7 +1424,7 @@ class LineChartPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.deepPurple
+      ..color = Colors.blue
       ..strokeWidth = 3
       ..style = PaintingStyle.stroke;
 
@@ -1433,7 +1449,7 @@ class LineChartPainter extends CustomPainter {
 
     // Draw points
     final pointPaint = Paint()
-      ..color = Colors.deepPurple
+      ..color = Colors.blue
       ..style = PaintingStyle.fill;
 
     for (final point in points) {
