@@ -214,22 +214,6 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
   }
 
   Widget _buildLocationSection() {
-    Future<void> _updateLocationName(latlong2.LatLng point) async {
-      try {
-        final response = await http.get(Uri.parse(
-          'https://nominatim.openstreetmap.org/reverse?format=json&lat=${point.latitude}&lon=${point.longitude}&zoom=18&addressdetails=1'
-        ));
-        
-        if (response.statusCode == 200) {
-          final data = json.decode(response.body);
-          final address = data['display_name'] ?? '${point.latitude.toStringAsFixed(4)}, ${point.longitude.toStringAsFixed(4)}';
-          _locationController.text = address;
-        }
-      } catch (e) {
-        _locationController.text = '${point.latitude.toStringAsFixed(4)}, ${point.longitude.toStringAsFixed(4)}';
-      }
-    }
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -240,13 +224,19 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
         const SizedBox(height: 8),
         TextFormField(
           controller: _locationController,
-          decoration: const InputDecoration(
-            labelText: 'Event Location',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: 'Search Location',
+            border: const OutlineInputBorder(),
+            suffixIcon: _isLoading 
+              ? const CircularProgressIndicator()
+              : IconButton(
+                  icon: const Icon(Icons.search),
+                  onPressed: _searchLocation,
+                ),
           ),
           validator: (value) {
             if (value == null || value.isEmpty) {
-              return 'Please enter event location';
+              return 'Please enter a location';
             }
             return null;
           },
@@ -256,13 +246,13 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
           height: 300,
           child: flutter_map.FlutterMap(
             options: flutter_map.MapOptions(
-              center: _selectedLocation ?? const latlong2.LatLng(0, 0),
+              center: _selectedLocation ?? const latlong2.LatLng(31.5204, 74.3587),
               zoom: 13.0,
-              onTap: (tapPosition, point) async {
+              onTap: (tapPosition, point) {
                 setState(() {
                   _selectedLocation = point;
+                  _updateLocationName(point);
                 });
-                await _updateLocationName(point);
               },
             ),
             children: [
@@ -275,20 +265,24 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
                   markers: [
                     flutter_map.Marker(
                       point: _selectedLocation!,
-                      width: 40,
-                      height: 40,
-                      builder: (ctx) => const Icon(Icons.location_pin, color: Colors.red, size: 40),
+                      builder: (ctx) => const Icon(
+                        Icons.location_pin,
+                        color: Colors.red,
+                        size: 40,
+                      ),
                     ),
                   ],
                 ),
             ],
           ),
         ),
-        const SizedBox(height: 8),
         if (_selectedLocation != null)
-          Text(
-            'Selected location: ${_selectedLocation!.latitude.toStringAsFixed(4)}, ${_selectedLocation!.longitude.toStringAsFixed(4)}',
-            style: const TextStyle(fontSize: 12, color: Colors.grey),
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: Text(
+              'Selected: ${_selectedLocation!.latitude.toStringAsFixed(4)}, ${_selectedLocation!.longitude.toStringAsFixed(4)}',
+              style: const TextStyle(color: Colors.grey),
+            ),
           ),
       ],
     );
@@ -764,6 +758,64 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
           content: Text('Error saving event: ${e.toString()}'),
           backgroundColor: Colors.red,
         ),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _updateLocationName(latlong2.LatLng point) async {
+    try {
+      final response = await http.get(Uri.parse(
+        'https://nominatim.openstreetmap.org/reverse?format=json&lat=${point.latitude}&lon=${point.longitude}&zoom=18&addressdetails=1'
+      ));
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final address = data['display_name'] ?? '${point.latitude.toStringAsFixed(4)}, ${point.longitude.toStringAsFixed(4)}';
+        setState(() {
+          _locationController.text = address;
+        });
+      }
+    } catch (e) {
+      _locationController.text = '${point.latitude.toStringAsFixed(4)}, ${point.longitude.toStringAsFixed(4)}';
+    }
+  }
+
+  Future<void> _searchLocation() async {
+    if (_locationController.text.isEmpty) return;
+    
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Search for location
+      final searchResponse = await http.get(Uri.parse(
+        'https://nominatim.openstreetmap.org/search?q=${_locationController.text}&format=json&limit=1'
+      ));
+      
+      if (searchResponse.statusCode == 200) {
+        final data = json.decode(searchResponse.body);
+        if (data.isNotEmpty) {
+          final point = latlong2.LatLng(
+            double.parse(data[0]['lat']),
+            double.parse(data[0]['lon'])
+          );
+          
+          setState(() {
+            _selectedLocation = point;
+          });
+          
+          // Get proper address name
+          await _updateLocationName(point);
+        }
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error searching location: ${e.toString()}'))
       );
     } finally {
       setState(() {
