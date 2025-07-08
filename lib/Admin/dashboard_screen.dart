@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'analytics_dashboard.dart';
-import 'event_moderation_screen.dart';
+import 'event_moderation_screen.dart'; // This is now the organizer management screen
+import 'event_approval_screen.dart';
 import 'boost_management_screen.dart';
 import 'report_block_screen.dart';
 import 'user_management_screen.dart';
+import 'notifications_screen.dart';
 import '../User/Event/comments_page.dart';
 import '/../Event_Organizer/EventAnalytics.dart';
 import '../Firebase/auth_service.dart';
@@ -83,8 +85,12 @@ class AdminDashboardScreen extends StatelessWidget {
     final tiles = [
       _DashboardItem(
           "Analytics Dashboard", Icons.bar_chart, const AnalyticsDashboard()),
-      _DashboardItem("Event Moderation", Icons.event_available,
+      _DashboardItem("Organizer Management", Icons.business,
+          const EventOrganizerModerationScreen()),
+      _DashboardItem("Event Approval", Icons.event_available,
           const EventModerationScreen()),
+      _DashboardItem("Notifications", Icons.notifications,
+          const AdminNotificationsScreen()),
       _DashboardItem("Boost Revenue", Icons.monetization_on,
           const BoostManagementScreen()),
       _DashboardItem("Report/Block", Icons.report, const ReportBlockScreen()),

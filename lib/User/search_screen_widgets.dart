@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../data/search_screen_data.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import './Event/event_detail_page.dart'; // Import the EventDetailPage
 import './Event/models/event.dart'; // Import the Event model
 
@@ -77,6 +77,9 @@ class SearchScreenWidgets {
     required DateTimeRange? selectedDateRange,
     required RangeValues priceRange,
     required String sortBy,
+    required List<String> availableCategories,
+    required List<String> availableLocations,
+    required List<String> sortOptions,
     required Function(String?) onCategoryChanged,
     required Function(String?) onLocationChanged,
     required Function(DateTimeRange?) onDateRangeChanged,
@@ -109,14 +112,14 @@ class SearchScreenWidgets {
           _buildFilterDropdown(
             'Category',
             selectedCategory,
-            SearchScreenData.categories,
+            availableCategories,
             onCategoryChanged,
           ),
           const SizedBox(height: 12),
           _buildFilterDropdown(
             'Location',
             selectedLocation,
-            SearchScreenData.locations,
+            availableLocations,
             onLocationChanged,
           ),
           const SizedBox(height: 12),
@@ -127,7 +130,7 @@ class SearchScreenWidgets {
           _buildFilterDropdown(
             'Sort by',
             getSortDisplayName(sortBy),
-            SearchScreenData.sortOptions.map(getSortDisplayName).toList(),
+            sortOptions.map(getSortDisplayName).toList(),
             onSortChanged,
           ),
         ],
@@ -222,14 +225,20 @@ class SearchScreenWidgets {
 
   static String getSortDisplayName(String sortValue) {
     switch (sortValue) {
-      case 'relevance': return 'Relevance';
-      case 'date_asc': return 'Date (Earliest First)';
-      case 'date_desc': return 'Date (Latest First)';
-      case 'price_asc': return 'Price (Low to High)';
-      case 'price_desc': return 'Price (High to Low)';
-      case 'rating': return 'Highest Rated';
-      case 'popularity': return 'Most Popular';
-      default: return sortValue;
+      case 'relevance':
+        return 'Relevance';
+      case 'date_asc':
+        return 'Date (Earliest First)';
+      case 'date_desc':
+        return 'Date (Latest First)';
+      case 'price_asc':
+        return 'Price (Low to High)';
+      case 'price_desc':
+        return 'Price (High to Low)';
+      case 'alphabetical':
+        return 'Alphabetical';
+      default:
+        return 'Relevance';
     }
   }
 
@@ -240,9 +249,50 @@ class SearchScreenWidgets {
     required bool isLoadingMore,
     required ScrollController scrollController,
     required VoidCallback onResetAll,
+    String? error,
   }) {
     if (isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(color: Colors.teal),
+            SizedBox(height: 16),
+            Text('Loading events...', style: TextStyle(color: Colors.white)),
+          ],
+        ),
+      );
+    }
+
+    if (error != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 64, color: Colors.red.shade300),
+            const SizedBox(height: 16),
+            Text(
+              'Error loading events',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              error,
+              style: TextStyle(color: Colors.white70),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: onResetAll,
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
     }
 
     if (filteredResults.isEmpty) {
@@ -264,7 +314,7 @@ class SearchScreenWidgets {
               if (searchQuery.isNotEmpty)
                 Text(
                   'for "$searchQuery"',
-                  style: TextStyle(color: Colors.teal.shade50,),
+                  style: TextStyle(color: Colors.teal.shade700),
                 ),
             ],
           ),
@@ -291,47 +341,65 @@ class SearchScreenWidgets {
     );
   }
 
-  static Event _mapToEvent(Map<String, dynamic> eventMap) {
-    // Convert pass types data
-    List<EventPassType> passTypes = [];
-    if (eventMap['price'] == 0) {
-      passTypes.add(
+  static Event _mapToEvent(Map<String, dynamic> eventData) {
+    final eventDate = _parseEventDateTime(eventData['eventDate']) ?? DateTime.now();
+    
+    return Event(
+      id: eventData['id'] ?? '',
+      title: eventData['title'] ?? 'Untitled Event',
+      description: eventData['description'] ?? '',
+      date: '${eventDate.day}/${eventDate.month}/${eventDate.year}',
+      time: '${eventDate.hour}:${eventDate.minute.toString().padLeft(2, '0')}',
+      location: eventData['location'] ?? 'Location TBD',
+      organizer: eventData['organizerName'] ?? 'Unknown Organizer',
+      organizerImage: eventData['organizerImage'] ?? 'https://randomuser.me/api/portraits/men/32.jpg',
+      bannerImage: eventData['imageUrl'] ?? eventData['image'] ?? 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3',
+      isPast: eventDate.isBefore(DateTime.now()),
+      passTypes: _createDefaultPassTypes(eventData['price']),
+      likeCount: 0,
+      commentCount: 0,
+    );
+  }
+
+  static List<EventPassType> _createDefaultPassTypes(dynamic price) {
+    final numPrice = _parsePrice(price) ?? 0.0;
+    
+    if (numPrice == 0) {
+      return [
         EventPassType(
           title: 'Free RSVP',
           price: 'Free',
           description: 'General access to the event',
           isFree: true,
         ),
-      );
+      ];
     } else {
-      passTypes.add(
+      return [
         EventPassType(
-          title: 'General Admission',
-          price: '\$${eventMap['price']}',
-          description: 'Access to all areas',
+          title: 'Event Ticket',
+          price: '\$${numPrice.toStringAsFixed(0)}',
+          description: 'Access to the event',
           isFree: false,
         ),
-      );
+      ];
     }
+  }
 
-    // Create and return the Event object
-    return Event(
-      id: eventMap['id']?.toString() ?? '1',
-      title: eventMap['title'] ?? 'Event Title',
-      description: eventMap['description'] ?? 'No description available',
-      date: eventMap['date'] != null 
-          ? '${eventMap['date'].day}/${eventMap['date'].month}/${eventMap['date'].year}'
-          : 'Date TBD',
-      time: eventMap['time'] ?? '7:00 PM',
-      location: eventMap['location'] ?? 'Location TBD',
-      organizer: eventMap['organizer'] ?? 'Event Organizer',
-      organizerImage: 'https://randomuser.me/api/portraits/men/32.jpg', // Default image
-      bannerImage: eventMap['image'] ?? 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3',
-      isPast: false, // Default to upcoming event
-      passTypes: passTypes,
-      likeCount: eventMap['likes'] ?? 0,
-      commentCount: eventMap['comments'] ?? 0,
-    );
+  static DateTime? _parseEventDateTime(dynamic date) {
+    if (date == null) return null;
+    
+    if (date is Timestamp) {
+      return date.toDate();
+    } else if (date is DateTime) {
+      return date;
+    } else if (date is String) {
+      try {
+        return DateTime.parse(date);
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
   }
 
   static Widget _buildEventCard(Map<String, dynamic> event) {
@@ -349,11 +417,11 @@ class SearchScreenWidgets {
         child: Container(
           margin: const EdgeInsets.only(bottom: 16),
           decoration: BoxDecoration(
-            color: Colors.teal.shade50,
+            color: Colors.white,
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: Colors.teal.shade50,
+                color: Colors.grey.withOpacity(0.2),
                 blurRadius: 5,
                 offset: const Offset(0, 2),
               ),
@@ -364,19 +432,7 @@ class SearchScreenWidgets {
             children: [
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                child: Image.network(
-                  event['image'],
-                  height: 150,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      height: 150,
-                      color: Colors.teal.shade50,
-                      child: const Icon(Icons.image, size: 50),
-                    );
-                  },
-                ),
+                child: _buildEventImage(event),
               ),
               Padding(
                 padding: const EdgeInsets.all(16),
@@ -388,13 +444,16 @@ class SearchScreenWidgets {
                       children: [
                         Expanded(
                           child: Text(
-                            event['title'],
+                            event['title'] ?? 'Untitled Event',
                             style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                             ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
+                        const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
@@ -402,9 +461,9 @@ class SearchScreenWidgets {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            event['price'] == 0 ? 'Free' : '\$${event['price']}',
+                            _formatPrice(event['ticketPrice'] ?? event['price']),
                             style: const TextStyle(
-                              color: Colors.deepPurple,
+                              color: Colors.teal,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -421,16 +480,12 @@ class SearchScreenWidgets {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
-                            event['category'],
+                            event['category'] ?? 'Other',
                             style: const TextStyle(fontSize: 12),
                           ),
                         ),
                         const Spacer(),
-                        const Icon(Icons.star, color: Colors.amber, size: 16),
-                        Text(
-                          ' ${event['rating']}',
-                          style: const TextStyle(fontWeight: FontWeight.w500),
-                        ),
+                        _buildStatusIndicator(event['status']),
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -438,9 +493,13 @@ class SearchScreenWidgets {
                       children: [
                         const Icon(Icons.location_on, size: 16, color: Colors.grey),
                         const SizedBox(width: 4),
-                        Text(
-                          event['location'],
-                          style: TextStyle(color: Colors.grey[600]),
+                        Expanded(
+                          child: Text(
+                            event['location'] ?? 'Location TBD',
+                            style: TextStyle(color: Colors.grey[600]),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                       ],
                     ),
@@ -450,30 +509,200 @@ class SearchScreenWidgets {
                         const Icon(Icons.calendar_today, size: 16, color: Colors.grey),
                         const SizedBox(width: 4),
                         Text(
-                          '${event['date'].day}/${event['date'].month}/${event['date'].year}',
+                          _formatEventDate(event['eventDate']),
                           style: TextStyle(color: Colors.grey[600]),
                         ),
                       ],
                     ),
+                    if (event['description'] != null && event['description'].toString().isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        event['description'],
+                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                     const SizedBox(height: 8),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
+                        if (event['maxAttendees'] != null)
+                          Text(
+                            'Max: ${event['maxAttendees']} attendees',
+                            style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                          )
+                        else if (event['currentAttendees'] != null)
+                          Text(
+                            '${event['currentAttendees']} attending',
+                            style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                          )
+                        else
+                          const SizedBox.shrink(),
                         Text(
-                          '${event['attendees']} attending',
-                          style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                        ),
-                        Text(
-                          'by ${event['organizer']}',
+                          'by ${event['organizerName'] ?? 'Unknown Organizer'}',
                           style: TextStyle(color: Colors.grey[600], fontSize: 12),
                         ),
                       ],
                     ),
                   ],
                 ),
-              ),            ],
+              ),
+            ],
           ),
         ),
+      ),
+    );
+  }
+
+  static Widget _buildEventImage(Map<String, dynamic> event) {
+    // Handle both imageUrls array and single imageUrl
+    String? imageUrl;
+    
+    if (event['imageUrls'] != null && event['imageUrls'] is List && (event['imageUrls'] as List).isNotEmpty) {
+      imageUrl = (event['imageUrls'] as List).first.toString();
+    } else if (event['imageUrl'] != null) {
+      imageUrl = event['imageUrl'].toString();
+    }
+    
+    if (imageUrl != null && imageUrl.isNotEmpty) {
+      return Image.network(
+        imageUrl,
+        height: 150,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            height: 150,
+            color: Colors.grey[200],
+            child: const Center(child: CircularProgressIndicator()),
+          );
+        },
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            height: 150,
+            color: Colors.grey[200],
+            child: const Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.event, size: 40, color: Colors.grey),
+                SizedBox(height: 8),
+                Text('Event Image', style: TextStyle(color: Colors.grey)),
+              ],
+            ),
+          );
+        },
+      );
+    } else {
+      return Container(
+        height: 150,
+        color: Colors.grey[200],
+        child: const Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.event, size: 40, color: Colors.grey),
+            SizedBox(height: 8),
+            Text('Event Image', style: TextStyle(color: Colors.grey)),
+          ],
+        ),
+      );
+    }
+  }
+
+  static String _formatPrice(dynamic price) {
+    if (price == null) return 'Free';
+    
+    final numPrice = _parsePrice(price);
+    if (numPrice == null || numPrice == 0) return 'Free';
+    
+    return '\$${numPrice.toStringAsFixed(0)}';
+  }
+
+  static double? _parsePrice(dynamic price) {
+    if (price == null) return 0.0;
+    
+    if (price is double) return price;
+    if (price is int) return price.toDouble();
+    if (price is String) {
+      try {
+        return double.parse(price);
+      } catch (e) {
+        return 0.0;
+      }
+    }
+    return 0.0;
+  }
+
+  static String _formatEventDate(dynamic date) {
+    if (date == null) return 'Date TBD';
+    
+    DateTime? eventDate;
+    if (date is Timestamp) {
+      eventDate = date.toDate();
+    } else if (date is DateTime) {
+      eventDate = date;
+    } else if (date is String) {
+      try {
+        eventDate = DateTime.parse(date);
+      } catch (e) {
+        return 'Date TBD';
+      }
+    }
+    
+    if (eventDate == null) return 'Date TBD';
+    
+    return '${eventDate.day}/${eventDate.month}/${eventDate.year}';
+  }
+
+  static Widget _buildStatusIndicator(String? status) {
+    Color color;
+    String text;
+    
+    switch (status?.toLowerCase()) {
+      case 'approved':
+        color = Colors.green;
+        text = 'Approved';
+        break;
+      case 'pending':
+        color = Colors.orange;
+        text = 'Pending';
+        break;
+      case 'rejected':
+        color = Colors.red;
+        text = 'Rejected';
+        break;
+      default:
+        color = Colors.grey;
+        text = 'Unknown';
+        break;
+    }
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.circle,
+            size: 8,
+            color: color,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 10,
+              color: color,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
       ),
     );
   }

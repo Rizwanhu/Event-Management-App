@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../Firebase/event_management_service.dart';
 import '../Models/event_model.dart';
+import '../firebase_services.dart';
 import 'package:flutter_map/flutter_map.dart' as flutter_map;
 import 'package:latlong2/latlong.dart' as latlong2;
 
@@ -28,6 +29,7 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
   final _priceController = TextEditingController();
   final _quantityController = TextEditingController();
   final EventManagementService _eventService = EventManagementService();
+  final FirebaseServices _firebaseServices = FirebaseServices();
   
   bool _isLoading = false;
   DateTime? _selectedDate;
@@ -725,15 +727,24 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
         maxAttendees: _isPaidEvent ? int.tryParse(_quantityController.text) : null,
         createdAt: widget.event?.createdAt ?? DateTime.now(),
         updatedAt: DateTime.now(),
+        status: widget.event == null ? EventStatus.pending : widget.event!.status, // New events need approval
       );
 
       String eventId;
       if (widget.event == null) {
         // Create new event
         eventId = await _eventService.createEvent(eventModel);
+        
+        // Notify admins about new event pending approval
+        await _firebaseServices.notifyAdminOfNewEvent(
+          eventId,
+          eventModel.title,
+          eventModel.organizerName,
+        );
+        
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Event created successfully!'),
+            content: Text('Event submitted for approval! You will be notified once reviewed.'),
             backgroundColor: Colors.green,
           ),
         );

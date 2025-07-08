@@ -64,7 +64,6 @@ class _SearchEventsPageState extends State<SearchEventsPage> {
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final UserEventsService _userEventsService = UserEventsService();
-  final UserEventsService _testEventsService = UserEventsService();
   Timer? _searchDebounceTimer;
   
   // Search and filter states
@@ -74,7 +73,6 @@ class _SearchEventsPageState extends State<SearchEventsPage> {
   List<String> _searchSuggestions = [];
   bool _isLoading = true;
   String? _error;
-  bool _debugMode = false;
   
   // Filter states
   String? _selectedCategory;
@@ -115,18 +113,9 @@ class _SearchEventsPageState extends State<SearchEventsPage> {
       _error = null;
     });
 
-    print('SearchScreen: Starting to load initial data...');
-
     // Listen to approved events stream
     _eventsSubscription = _userEventsService.getApprovedEvents().listen(
       (events) {
-        print('SearchScreen: Received ${events.length} events from UserEventsService');
-        
-        // Debug: Print each event received
-        for (var event in events) {
-          print('Event received: ${event['title']} - Status: ${event['status']} - Published: ${event['isPublished']}');
-        }
-        
         if (mounted) {
           setState(() {
             _allEvents = events;
@@ -138,61 +127,10 @@ class _SearchEventsPageState extends State<SearchEventsPage> {
         }
       },
       onError: (error) {
-        print('SearchScreen: Error loading events: $error');
-        
-        String errorMessage = 'Failed to load events';
-        if (error.toString().contains('failed-precondition')) {
-          errorMessage = 'Database configuration issue. Please contact support.';
-        } else if (error.toString().contains('permission-denied')) {
-          errorMessage = 'Permission denied. Please check your authentication.';
-        } else if (error.toString().contains('unavailable')) {
-          errorMessage = 'Service temporarily unavailable. Please try again later.';
-        } else {
-          errorMessage = 'Failed to load events: ${error.toString()}';
-        }
-        
         if (mounted) {
           setState(() {
             _isLoading = false;
-            _error = errorMessage;
-            _allEvents = [];
-            _filteredResults = [];
-          });
-        }
-      },
-    );
-  }
-
-  void _loadDebugData() {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-      _debugMode = true;
-    });
-
-    print('SearchScreen: Loading debug data (all events with status)...');
-
-    // Listen to all events for debugging
-    _eventsSubscription?.cancel();
-    _eventsSubscription = _userEventsService.getApprovedEvents().listen(
-      (events) {
-        print('SearchScreen: DEBUG MODE - Received ${events.length} total events');
-        if (mounted) {
-          setState(() {
-            _allEvents = events;
-            _filteredResults = List.from(events);
-            _isLoading = false;
-            _error = null;
-          });
-          _applyFilters();
-        }
-      },
-      onError: (error) {
-        print('SearchScreen: DEBUG MODE - Error loading events: $error');
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-            _error = 'Failed to load debug events: $error';
+            _error = 'Failed to load events. Please try again.';
           });
         }
       },
@@ -295,7 +233,7 @@ class _SearchEventsPageState extends State<SearchEventsPage> {
       }).toList();
     }
 
-    // Price range filter (if price field exists)
+    // Price range filter
     results = results.where((event) {
       final price = _parsePrice(event['price']) ?? 0.0;
       return price >= _priceRange.start && price <= _priceRange.end;
@@ -382,7 +320,7 @@ class _SearchEventsPageState extends State<SearchEventsPage> {
         break;
       case 'relevance':
       default:
-        // Keep original order for relevance (Firebase already orders by date)
+        // Keep original order for relevance
         break;
     }
   }
@@ -401,14 +339,12 @@ class _SearchEventsPageState extends State<SearchEventsPage> {
       _isLoadingMore = true;
     });
 
-    // In a real app, you would implement pagination here
-    // For now, we'll just simulate having no more data
+    // Simulate loading more data
     Future.delayed(const Duration(seconds: 1), () {
       if (mounted) {
         setState(() {
           _isLoadingMore = false;
           _currentPage++;
-          // Simulate no more data after a few pages
           if (_currentPage > 3) {
             _hasMoreData = false;
           }
@@ -480,6 +416,7 @@ class _SearchEventsPageState extends State<SearchEventsPage> {
       'alphabetical'
     ];
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -488,27 +425,11 @@ class _SearchEventsPageState extends State<SearchEventsPage> {
         backgroundColor: Colors.teal,
         elevation: 0,
         automaticallyImplyLeading: false,
-        title: Text(
-          _debugMode ? 'Search Events (Debug)' : 'Search Events',
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        title: const Text(
+          'Search Events',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         actions: [
-          // Debug toggle button
-          IconButton(
-            icon: Icon(
-              _debugMode ? Icons.bug_report : Icons.search,
-              color: Colors.white,
-            ),
-            onPressed: () {
-              if (_debugMode) {
-                setState(() => _debugMode = false);
-                _loadInitialData();
-              } else {
-                _loadDebugData();
-              }
-            },
-            tooltip: _debugMode ? 'Switch to Normal Mode' : 'Debug Mode (Show All Events)',
-          ),
           // Filter toggle button
           IconButton(
             icon: Icon(
@@ -562,7 +483,6 @@ class _SearchEventsPageState extends State<SearchEventsPage> {
               onPriceRangeChangeEnd: (values) => _applyFilters(),
               onSortChanged: (value) {
                 if (value != null) {
-                  // Find the sort option that matches the display name
                   final sortValue = _sortOptions.firstWhere(
                     (option) => SearchScreenWidgets.getSortDisplayName(option) == value,
                     orElse: () => 'relevance',
@@ -586,258 +506,6 @@ class _SearchEventsPageState extends State<SearchEventsPage> {
           ),
         ],
       ),
-      floatingActionButton: _debugMode ? FloatingActionButton(
-        onPressed: _showDebugMenu,
-        backgroundColor: Colors.orange,
-        child: const Icon(Icons.build, color: Colors.white),
-        tooltip: 'Debug Tools',
-      ) : null,
     );
-  }
-
-  void _showDebugMenu() {
-    showModalBottomSheet(
-      context: context,
-      builder: (BuildContext context) {
-        return Container(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'Debug Tools',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              ListTile(
-                leading: const Icon(Icons.add_circle, color: Colors.green),
-                title: const Text('Create Test Approved Events'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _createTestApprovedEvents();
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.pending, color: Colors.orange),
-                title: const Text('Create Test Pending Events'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _createTestPendingEvents();
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.info, color: Colors.blue),
-                title: const Text('Check Firebase Status'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _checkFirebaseStatus();
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.delete_forever, color: Colors.red),
-                title: const Text('Delete All Test Events'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _deleteAllTestEvents();
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.verified, color: Colors.green),
-                title: const Text('Debug Approved Events'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _debugApprovedEvents();
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.add_circle, color: Colors.green),
-                title: const Text('Create Multiple Test Approved Events'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _createMultipleTestApprovedEvents();
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.add_circle, color: Colors.green),
-                title: const Text('Create Single Test Approved Event'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _createApprovedEventViaUserService();
-                },
-              ),
-              const SizedBox(height: 16),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  void _createTestApprovedEvents() async {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Creating test approved events...')),
-    );
-    
-    await _testEventsService.createTestApprovedEvents();
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Test approved events created!')),
-    );
-  }
-
-  void _createTestPendingEvents() async {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Creating test pending events...')),
-    );
-    
-    await _testEventsService.createTestPendingEvents();
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Test pending events created!')),
-    );
-  }
-
-  void _checkFirebaseStatus() async {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Checking Firebase status...')),
-    );
-    
-    await _testEventsService.checkFirebaseStatus();
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Firebase status checked (see console logs)')),
-    );
-  }
-
-  void _deleteAllTestEvents() async {
-    // Show confirmation dialog
-    bool? confirmed = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Confirm Delete'),
-          content: const Text('Are you sure you want to delete ALL events? This cannot be undone.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Delete All', style: TextStyle(color: Colors.red)),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (confirmed == true) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Deleting all test events...')),
-      );
-      
-      await _testEventsService.deleteAllTestEvents();
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('All test events deleted!')),
-      );
-    }
-  }
-
-  Future<void> _debugApprovedEvents() async {
-    try {
-      print('=== DEBUG: Checking approved events via UserEventsService ===');
-      
-      // Call the debug method from UserEventsService
-      await _userEventsService.debugEventStatuses();
-      
-      // Also check current state
-      print('Current loaded events: ${_allEvents.length}');
-      print('Current filtered events: ${_filteredResults.length}');
-      print('Is loading: $_isLoading');
-      print('Error: $_error');
-      
-      // Show a snackbar with summary
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Debug complete. Check console for details. Found ${_allEvents.length} loaded events.'),
-            backgroundColor: Colors.blue,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-    } catch (e) {
-      print('Error in debug approved events: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Debug error: $e'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _createApprovedEventViaUserService() async {
-    try {
-      print('Creating approved event via UserEventsService...');
-      
-      // Call the test method from UserEventsService
-      await _userEventsService.createTestApprovedEvent();
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Test approved event created successfully!'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 3),
-          ),
-        );
-      }
-    } catch (e) {
-      print('Error creating approved event: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error creating event: $e'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _createMultipleTestApprovedEvents() async {
-    try {
-      print('Creating multiple approved events via UserEventsService...');
-      
-      // Call the test method from UserEventsService
-      await _userEventsService.createMultipleTestApprovedEvents();
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Multiple test approved events created successfully!'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 3),
-          ),
-        );
-      }
-    } catch (e) {
-      print('Error creating multiple approved events: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error creating events: $e'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-    }
   }
 }

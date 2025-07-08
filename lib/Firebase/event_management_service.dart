@@ -17,6 +17,7 @@ class EventManagementService {
 
   // Collection references
   CollectionReference get _eventsCollection => _firestore.collection('events');
+  CollectionReference get _approvalsCollection => _firestore.collection('event_approvals');
 
   /// Create a new event
   Future<String> createEvent(EventModel event) async {
@@ -28,6 +29,30 @@ class EventManagementService {
 
       // Create event document
       final docRef = await _eventsCollection.add(event.toMap());
+      
+      // Add to approval collection for admin review
+      await _approvalsCollection.add({
+        'eventId': docRef.id,
+        'title': event.title,
+        'description': event.description,
+        'organizerId': event.organizerId,
+        'organizerName': event.organizerName,
+        'eventDate': Timestamp.fromDate(event.eventDate),
+        'eventTime': event.eventTime != null ? '${event.eventTime!.hour}:${event.eventTime!.minute}' : null,
+        'location': event.location,
+        'latitude': event.latitude,
+        'longitude': event.longitude,
+        'category': event.category,
+        'tags': event.tags,
+        'imageUrls': event.imageUrls,
+        'ticketType': event.ticketType.toString().split('.').last,
+        'ticketPrice': event.ticketPrice,
+        'maxAttendees': event.maxAttendees,
+        'status': 'pending',
+        'priority': _calculatePriority(event),
+        'submittedAt': FieldValue.serverTimestamp(),
+        'createdAt': FieldValue.serverTimestamp(),
+      });
       
       print('Event created successfully with ID: ${docRef.id}');
       return docRef.id;
@@ -48,6 +73,30 @@ class EventManagementService {
       // Create event document without images
       final eventWithoutImages = event.copyWith(imageUrls: []);
       final docRef = await _eventsCollection.add(eventWithoutImages.toMap());
+      
+      // Add to approval collection for admin review
+      await _approvalsCollection.add({
+        'eventId': docRef.id,
+        'title': eventWithoutImages.title,
+        'description': eventWithoutImages.description,
+        'organizerId': eventWithoutImages.organizerId,
+        'organizerName': eventWithoutImages.organizerName,
+        'eventDate': Timestamp.fromDate(eventWithoutImages.eventDate),
+        'eventTime': eventWithoutImages.eventTime != null ? '${eventWithoutImages.eventTime!.hour}:${eventWithoutImages.eventTime!.minute}' : null,
+        'location': eventWithoutImages.location,
+        'latitude': eventWithoutImages.latitude,
+        'longitude': eventWithoutImages.longitude,
+        'category': eventWithoutImages.category,
+        'tags': eventWithoutImages.tags,
+        'imageUrls': [], // No images
+        'ticketType': eventWithoutImages.ticketType.toString().split('.').last,
+        'ticketPrice': eventWithoutImages.ticketPrice,
+        'maxAttendees': eventWithoutImages.maxAttendees,
+        'status': 'pending',
+        'priority': _calculatePriority(eventWithoutImages),
+        'submittedAt': FieldValue.serverTimestamp(),
+        'createdAt': FieldValue.serverTimestamp(),
+      });
       
       print('Event created successfully without images with ID: ${docRef.id}');
       return docRef.id;
@@ -488,6 +537,20 @@ class EventManagementService {
     } catch (e) {
       print('Firebase connection test failed: $e');
       return false;
+    }
+  }
+
+  /// Calculate priority based on event date and other factors
+  String _calculatePriority(EventModel event) {
+    final now = DateTime.now();
+    final daysUntilEvent = event.eventDate.difference(now).inDays;
+    
+    if (daysUntilEvent <= 7) {
+      return 'high';
+    } else if (daysUntilEvent <= 30) {
+      return 'medium';
+    } else {
+      return 'low';
     }
   }
 }

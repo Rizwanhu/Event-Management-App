@@ -60,7 +60,7 @@ class EventModel {
     this.ticketPrice,
     this.maxAttendees,
     this.currentAttendees = 0,
-    this.status = EventStatus.draft,
+    this.status = EventStatus.pending, // Events need admin approval by default
     required this.createdAt,
     required this.updatedAt,
     this.isPublished = false,

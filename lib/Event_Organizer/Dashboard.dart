@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'create_edit_event_screen.dart';
 import 'organizer_settings_screen.dart';
 import 'notifications_screen.dart';
+import 'pending_events_screen.dart';
 import '../Firebase/event_management_service.dart';
 import '../Firebase/notification_service.dart';
 import '../Models/event_model.dart';
@@ -41,7 +42,7 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
     _loadEvents();
     _loadStatistics();
   }
@@ -217,6 +218,7 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
               tabs: const [
                 Tab(text: 'Overview'),
                 Tab(text: 'Events'),
+                Tab(text: 'My Events'),
                 Tab(text: 'Analytics'),
                 Tab(text: 'Insights'),
               ],
@@ -230,6 +232,7 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
               children: [
                 _buildOverviewTab(),
                 _buildEventsTab(),
+                _buildMyEventsTab(),
                 _buildAnalyticsTab(),
                 _buildInsightsTab(),
               ],
@@ -361,6 +364,11 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
           
           const SizedBox(height: 20),
           
+          // Pending Events Summary Box
+          _buildPendingEventsBox(),
+          
+          const SizedBox(height: 20),
+          
           // Recent Events
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -468,6 +476,10 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
         );
       }
     });
+  }
+
+  Widget _buildMyEventsTab() {
+    return const PendingEventsScreen();
   }
 
   Widget _buildAnalyticsTab() {
@@ -1389,6 +1401,138 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
           fontWeight: FontWeight.bold,
           fontSize: 12,
         ),
+      ),
+    );
+  }
+
+  Widget _buildPendingEventsBox() {
+    final pendingEvents = events.where((event) => event.status == EventStatus.pending).toList();
+    final pendingCount = pendingEvents.length;
+    
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.orange.withOpacity(0.3),
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: _colorScheme.onSurface.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.pending_actions,
+                  color: Colors.orange.shade700,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Pending Events',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: _colorScheme.onSurface,
+                      ),
+                    ),
+                    Text(
+                      '$pendingCount events awaiting approval',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: _colorScheme.onSurface.withOpacity(0.7),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade700,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '$pendingCount',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          
+          if (pendingCount > 0) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.orange.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: Colors.orange.withOpacity(0.2),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    color: Colors.orange.shade700,
+                    size: 16,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Your events are under review. You\'ll be notified once they\'re approved.',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.orange.shade700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          
+          if (pendingCount > 0) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () => _tabController.animateTo(2), // Navigate to My Events tab
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: Colors.orange.shade700),
+                  foregroundColor: Colors.orange.shade700,
+                ),
+                child: const Text('View My Events'),
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }

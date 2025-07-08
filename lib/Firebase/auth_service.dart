@@ -233,7 +233,7 @@ class FirebaseAuthService {
               .update({'lastLoginAt': FieldValue.serverTimestamp()})
               .timeout(const Duration(seconds: 5));
         } catch (e) {
-          debugPrint('Warning: Failed to update admin last login time: $e');
+          // debugPrint('Warning: Failed to update admin last login time: $e');
           // Don't fail the login process if this update fails
         }
       }
@@ -281,7 +281,7 @@ class FirebaseAuthService {
       }
 
       // Check in event_organizers collection
-      debugPrint('Checking event_organizers collection...');
+      // debugPrint('Checking event_organizers collection...');
       DocumentSnapshot organizerDoc = await _firestore
           .collection('event_organizers')
           .doc(uid)
