@@ -15,7 +15,7 @@ class SearchScreen extends StatefulWidget {
 
 class _SearchScreenState extends State<SearchScreen> {
   int _currentIndex = 0;
-  
+
   final List<Widget> _pages = [
     const SearchEventsPage(),
     const PromoteEventPage(),
@@ -66,7 +66,7 @@ class _SearchEventsPageState extends State<SearchEventsPage> {
   final UserEventsService _userEventsService = UserEventsService();
   final UserEventsService _testEventsService = UserEventsService();
   Timer? _searchDebounceTimer;
-  
+
   // Search and filter states
   String _searchQuery = '';
   List<Map<String, dynamic>> _allEvents = [];
@@ -75,7 +75,7 @@ class _SearchEventsPageState extends State<SearchEventsPage> {
   bool _isLoading = true;
   String? _error;
   bool _debugMode = false;
-  
+
   // Filter states
   String? _selectedCategory;
   String? _selectedLocation;
@@ -120,13 +120,15 @@ class _SearchEventsPageState extends State<SearchEventsPage> {
     // Listen to approved events stream
     _eventsSubscription = _userEventsService.getApprovedEvents().listen(
       (events) {
-        print('SearchScreen: Received ${events.length} events from UserEventsService');
-        
+        print(
+            'SearchScreen: Received ${events.length} events from UserEventsService');
+
         // Debug: Print each event received
         for (var event in events) {
-          print('Event received: ${event['title']} - Status: ${event['status']} - Published: ${event['isPublished']}');
+          print(
+              'Event received: ${event['title']} - Status: ${event['status']} - Published: ${event['isPublished']}');
         }
-        
+
         if (mounted) {
           setState(() {
             _allEvents = events;
@@ -139,18 +141,20 @@ class _SearchEventsPageState extends State<SearchEventsPage> {
       },
       onError: (error) {
         print('SearchScreen: Error loading events: $error');
-        
+
         String errorMessage = 'Failed to load events';
         if (error.toString().contains('failed-precondition')) {
-          errorMessage = 'Database configuration issue. Please contact support.';
+          errorMessage =
+              'Database configuration issue. Please contact support.';
         } else if (error.toString().contains('permission-denied')) {
           errorMessage = 'Permission denied. Please check your authentication.';
         } else if (error.toString().contains('unavailable')) {
-          errorMessage = 'Service temporarily unavailable. Please try again later.';
+          errorMessage =
+              'Service temporarily unavailable. Please try again later.';
         } else {
           errorMessage = 'Failed to load events: ${error.toString()}';
         }
-        
+
         if (mounted) {
           setState(() {
             _isLoading = false;
@@ -176,7 +180,8 @@ class _SearchEventsPageState extends State<SearchEventsPage> {
     _eventsSubscription?.cancel();
     _eventsSubscription = _userEventsService.getApprovedEvents().listen(
       (events) {
-        print('SearchScreen: DEBUG MODE - Received ${events.length} total events');
+        print(
+            'SearchScreen: DEBUG MODE - Received ${events.length} total events');
         if (mounted) {
           setState(() {
             _allEvents = events;
@@ -201,10 +206,10 @@ class _SearchEventsPageState extends State<SearchEventsPage> {
 
   void _onSearchChanged() {
     final query = _searchController.text.toLowerCase().trim();
-    
+
     // Cancel previous timer
     _searchDebounceTimer?.cancel();
-    
+
     // Set new timer for debounced search
     _searchDebounceTimer = Timer(const Duration(milliseconds: 500), () {
       if (mounted) {
@@ -228,19 +233,20 @@ class _SearchEventsPageState extends State<SearchEventsPage> {
 
   void _generateSuggestions(String query) {
     final suggestions = <String>{};
-    
+
     for (final event in _allEvents) {
       final title = event['title']?.toString().toLowerCase() ?? '';
       final category = event['category']?.toString().toLowerCase() ?? '';
       final location = event['location']?.toString().toLowerCase() ?? '';
       final organizer = event['organizerName']?.toString().toLowerCase() ?? '';
-      
+
       if (title.contains(query)) suggestions.add(event['title']);
       if (category.contains(query)) suggestions.add(event['category']);
       if (location.contains(query)) suggestions.add(event['location']);
-      if (organizer.contains(query)) suggestions.add(event['organizerName'] ?? 'Unknown');
+      if (organizer.contains(query))
+        suggestions.add(event['organizerName'] ?? 'Unknown');
     }
-    
+
     setState(() {
       _searchSuggestions = suggestions.take(5).toList();
     });
@@ -253,12 +259,12 @@ class _SearchEventsPageState extends State<SearchEventsPage> {
       final location = event['location']?.toString().toLowerCase() ?? '';
       final description = event['description']?.toString().toLowerCase() ?? '';
       final organizer = event['organizerName']?.toString().toLowerCase() ?? '';
-      
+
       return title.contains(query) ||
-             category.contains(query) ||
-             location.contains(query) ||
-             description.contains(query) ||
-             organizer.contains(query);
+          category.contains(query) ||
+          location.contains(query) ||
+          description.contains(query) ||
+          organizer.contains(query);
     }).toList();
 
     setState(() {
@@ -269,19 +275,20 @@ class _SearchEventsPageState extends State<SearchEventsPage> {
 
   void _applyFilters() {
     var results = List<Map<String, dynamic>>.from(
-      _searchQuery.isEmpty ? _allEvents : _filteredResults
-    );
+        _searchQuery.isEmpty ? _allEvents : _filteredResults);
 
     // Category filter
     if (_selectedCategory != null && _selectedCategory != 'All Categories') {
-      results = results.where((event) => 
-        event['category']?.toString() == _selectedCategory).toList();
+      results = results
+          .where((event) => event['category']?.toString() == _selectedCategory)
+          .toList();
     }
 
     // Location filter
     if (_selectedLocation != null && _selectedLocation != 'All Locations') {
-      results = results.where((event) => 
-        event['location']?.toString() == _selectedLocation).toList();
+      results = results
+          .where((event) => event['location']?.toString() == _selectedLocation)
+          .toList();
     }
 
     // Date range filter
@@ -289,9 +296,11 @@ class _SearchEventsPageState extends State<SearchEventsPage> {
       results = results.where((event) {
         final eventDate = _parseEventDate(event['eventDate']);
         if (eventDate == null) return false;
-        
-        return eventDate.isAfter(_selectedDateRange!.start.subtract(const Duration(days: 1))) &&
-               eventDate.isBefore(_selectedDateRange!.end.add(const Duration(days: 1)));
+
+        return eventDate.isAfter(
+                _selectedDateRange!.start.subtract(const Duration(days: 1))) &&
+            eventDate
+                .isBefore(_selectedDateRange!.end.add(const Duration(days: 1)));
       }).toList();
     }
 
@@ -311,7 +320,7 @@ class _SearchEventsPageState extends State<SearchEventsPage> {
 
   DateTime? _parseEventDate(dynamic date) {
     if (date == null) return null;
-    
+
     if (date is Timestamp) {
       return date.toDate();
     } else if (date is DateTime) {
@@ -328,7 +337,7 @@ class _SearchEventsPageState extends State<SearchEventsPage> {
 
   double? _parsePrice(dynamic price) {
     if (price == null) return 0.0;
-    
+
     if (price is double) return price;
     if (price is int) return price.toDouble();
     if (price is String) {
@@ -388,7 +397,7 @@ class _SearchEventsPageState extends State<SearchEventsPage> {
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels >= 
+    if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
       _loadMoreData();
     }
@@ -475,11 +484,12 @@ class _SearchEventsPageState extends State<SearchEventsPage> {
       'relevance',
       'date_asc',
       'date_desc',
-      'price_asc', 
+      'price_asc',
       'price_desc',
       'alphabetical'
     ];
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -490,7 +500,8 @@ class _SearchEventsPageState extends State<SearchEventsPage> {
         automaticallyImplyLeading: false,
         title: Text(
           _debugMode ? 'Search Events (Debug)' : 'Search Events',
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style:
+              const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         actions: [
           // Debug toggle button
@@ -507,7 +518,9 @@ class _SearchEventsPageState extends State<SearchEventsPage> {
                 _loadDebugData();
               }
             },
-            tooltip: _debugMode ? 'Switch to Normal Mode' : 'Debug Mode (Show All Events)',
+            tooltip: _debugMode
+                ? 'Switch to Normal Mode'
+                : 'Debug Mode (Show All Events)',
           ),
           // Filter toggle button
           IconButton(
@@ -558,13 +571,15 @@ class _SearchEventsPageState extends State<SearchEventsPage> {
                 setState(() => _selectedDateRange = null);
                 _applyFilters();
               },
-              onPriceRangeChanged: (values) => setState(() => _priceRange = values),
+              onPriceRangeChanged: (values) =>
+                  setState(() => _priceRange = values),
               onPriceRangeChangeEnd: (values) => _applyFilters(),
               onSortChanged: (value) {
                 if (value != null) {
                   // Find the sort option that matches the display name
                   final sortValue = _sortOptions.firstWhere(
-                    (option) => SearchScreenWidgets.getSortDisplayName(option) == value,
+                    (option) =>
+                        SearchScreenWidgets.getSortDisplayName(option) == value,
                     orElse: () => 'relevance',
                   );
                   setState(() => _sortBy = sortValue);
@@ -586,12 +601,14 @@ class _SearchEventsPageState extends State<SearchEventsPage> {
           ),
         ],
       ),
-      floatingActionButton: _debugMode ? FloatingActionButton(
-        onPressed: _showDebugMenu,
-        backgroundColor: Colors.orange,
-        child: const Icon(Icons.build, color: Colors.white),
-        tooltip: 'Debug Tools',
-      ) : null,
+      floatingActionButton: _debugMode
+          ? FloatingActionButton(
+              onPressed: _showDebugMenu,
+              backgroundColor: Colors.orange,
+              child: const Icon(Icons.build, color: Colors.white),
+              tooltip: 'Debug Tools',
+            )
+          : null,
     );
   }
 
@@ -677,9 +694,9 @@ class _SearchEventsPageState extends State<SearchEventsPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Creating test approved events...')),
     );
-    
+
     await _testEventsService.createTestApprovedEvents();
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Test approved events created!')),
     );
@@ -689,9 +706,9 @@ class _SearchEventsPageState extends State<SearchEventsPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Creating test pending events...')),
     );
-    
+
     await _testEventsService.createTestPendingEvents();
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Test pending events created!')),
     );
@@ -701,11 +718,12 @@ class _SearchEventsPageState extends State<SearchEventsPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Checking Firebase status...')),
     );
-    
+
     await _testEventsService.checkFirebaseStatus();
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Firebase status checked (see console logs)')),
+      const SnackBar(
+          content: Text('Firebase status checked (see console logs)')),
     );
   }
 
@@ -716,7 +734,8 @@ class _SearchEventsPageState extends State<SearchEventsPage> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Confirm Delete'),
-          content: const Text('Are you sure you want to delete ALL events? This cannot be undone.'),
+          content: const Text(
+              'Are you sure you want to delete ALL events? This cannot be undone.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
@@ -724,7 +743,8 @@ class _SearchEventsPageState extends State<SearchEventsPage> {
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Delete All', style: TextStyle(color: Colors.red)),
+              child:
+                  const Text('Delete All', style: TextStyle(color: Colors.red)),
             ),
           ],
         );
@@ -735,9 +755,9 @@ class _SearchEventsPageState extends State<SearchEventsPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Deleting all test events...')),
       );
-      
+
       await _testEventsService.deleteAllTestEvents();
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('All test events deleted!')),
       );
@@ -747,21 +767,22 @@ class _SearchEventsPageState extends State<SearchEventsPage> {
   Future<void> _debugApprovedEvents() async {
     try {
       print('=== DEBUG: Checking approved events via UserEventsService ===');
-      
+
       // Call the debug method from UserEventsService
       await _userEventsService.debugEventStatuses();
-      
+
       // Also check current state
       print('Current loaded events: ${_allEvents.length}');
       print('Current filtered events: ${_filteredResults.length}');
       print('Is loading: $_isLoading');
       print('Error: $_error');
-      
+
       // Show a snackbar with summary
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Debug complete. Check console for details. Found ${_allEvents.length} loaded events.'),
+            content: Text(
+                'Debug complete. Check console for details. Found ${_allEvents.length} loaded events.'),
             backgroundColor: Colors.blue,
             duration: const Duration(seconds: 3),
           ),
@@ -772,7 +793,7 @@ class _SearchEventsPageState extends State<SearchEventsPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Debug error: $e'),
+            content: Text('Error: ${e is FirebaseException ? '${e.code}: ${e.message}' : e.toString()}'),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),
@@ -784,10 +805,10 @@ class _SearchEventsPageState extends State<SearchEventsPage> {
   Future<void> _createApprovedEventViaUserService() async {
     try {
       print('Creating approved event via UserEventsService...');
-      
+
       // Call the test method from UserEventsService
       await _userEventsService.createTestApprovedEvent();
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -802,7 +823,7 @@ class _SearchEventsPageState extends State<SearchEventsPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error creating event: $e'),
+            content: Text('Error: ${e is FirebaseException ? '${e.code}: ${e.message}' : e.toString()}'),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),
@@ -814,25 +835,29 @@ class _SearchEventsPageState extends State<SearchEventsPage> {
   Future<void> _createMultipleTestApprovedEvents() async {
     try {
       print('Creating multiple approved events via UserEventsService...');
-      
+
       // Call the test method from UserEventsService
       await _userEventsService.createMultipleTestApprovedEvents();
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Multiple test approved events created successfully!'),
+            content:
+                Text('Multiple test approved events created successfully!'),
             backgroundColor: Colors.green,
             duration: Duration(seconds: 3),
           ),
         );
       }
     } catch (e) {
-      print('Error creating multiple approved events: $e');
+      debugPrint('Error creating test events: ${e.toString()}');
       if (mounted) {
+        final message = e is FirebaseException 
+          ? 'Failed: ${e.code}' 
+          : 'Operation failed';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error creating events: $e'),
+            content: Text(message),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),
