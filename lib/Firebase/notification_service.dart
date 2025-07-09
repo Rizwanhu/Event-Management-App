@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 enum NotificationType {
   eventCreated,
@@ -118,6 +120,74 @@ class NotificationService {
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseMessaging _fcm = FirebaseMessaging.instance;
+  late final FlutterLocalNotificationsPlugin _localNotifications;
+
+  Future<void> initialize() async {
+    // Initialize local notifications
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+    const InitializationSettings initializationSettings =
+        InitializationSettings(android: initializationSettingsAndroid);
+    _localNotifications = FlutterLocalNotificationsPlugin();
+    await _localNotifications.initialize(initializationSettings);
+
+    // Request notification permissions
+    await _fcm.requestPermission(
+      alert: true,
+      announcement: false,
+      badge: true,
+      carPlay: false,
+      criticalAlert: false,
+      provisional: false,
+      sound: true,
+    );
+
+    // Handle foreground messages
+    FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+
+    // Handle background/terminated messages
+    FirebaseMessaging.onBackgroundMessage(_handleBackgroundMessage);
+  }
+
+  Future<void> _handleForegroundMessage(RemoteMessage message) async {
+    await _showLocalNotification(message);
+  }
+
+  Future<void> _showLocalNotification(RemoteMessage message) async {
+    const AndroidNotificationDetails androidPlatformChannelSpecifics =
+        AndroidNotificationDetails(
+      'event_channel',
+      'Event Notifications',
+      importance: Importance.max,
+      priority: Priority.high,
+      showWhen: true,
+    );
+
+    const NotificationDetails platformChannelSpecifics =
+        NotificationDetails(android: androidPlatformChannelSpecifics);
+
+    await _localNotifications.show(
+      0,
+      message.notification?.title,
+      message.notification?.body,
+      platformChannelSpecifics,
+      payload: message.data.toString(),
+    );
+  }
+
+  Future<void> _handleBackgroundMessage(RemoteMessage message) async {
+    // Save notification to Firestore
+    if (message.data.containsKey('userId')) {
+      await sendNotification(
+        userId: message.data['userId'],
+        title: message.notification?.title ?? 'New Notification',
+        message: message.notification?.body ?? '',
+        type: NotificationType.systemAlert,
+        data: message.data,
+      );
+    }
+  }
 
   CollectionReference get _notificationsCollection => _firestore.collection('notifications');
 

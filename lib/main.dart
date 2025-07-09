@@ -8,6 +8,7 @@ import 'User/ProfileScreen.dart';
 import 'Login.dart';
 import 'Firebase/auth_wrapper.dart';
 import 'Firebase/user_data_service.dart';
+import 'Firebase/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized(); // required before Firebase init
@@ -20,6 +21,9 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  
+  // Initialize notification service
+  await NotificationService().initialize();
   
   // Preload user data for faster profile loading
   UserDataService().preloadUserData();
