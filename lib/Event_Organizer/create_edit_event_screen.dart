@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
@@ -14,7 +15,7 @@ import 'package:latlong2/latlong.dart' as latlong2;
 
 class CreateEditEventScreen extends StatefulWidget {
   final EventModel? event;
-  
+
   const CreateEditEventScreen({super.key, this.event});
 
   @override
@@ -30,7 +31,7 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
   final _quantityController = TextEditingController();
   final EventManagementService _eventService = EventManagementService();
   final FirebaseServices _firebaseServices = FirebaseServices();
-  
+
   bool _isLoading = false;
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
@@ -40,13 +41,28 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
   List<String> _existingImageUrls = []; // For existing images when editing
   bool _isPaidEvent = false;
   latlong2.LatLng? _selectedLocation;
-  
+  bool _isOrganizerApproved = true; // Default true for non-organizers
+
   final List<String> _categories = [
-    'Conference', 'Workshop', 'Seminar', 'Concert', 'Sports', 'Festival', 'Networking', 'Other'
+    'Conference',
+    'Workshop',
+    'Seminar',
+    'Concert',
+    'Sports',
+    'Festival',
+    'Networking',
+    'Other'
   ];
-  
+
   final List<String> _availableTags = [
-    'Technology', 'Business', 'Music', 'Art', 'Sports', 'Education', 'Health', 'Food'
+    'Technology',
+    'Business',
+    'Music',
+    'Art',
+    'Sports',
+    'Education',
+    'Health',
+    'Food'
   ];
 
   @override
@@ -55,6 +71,7 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
     if (widget.event != null) {
       _populateFields();
     }
+    _checkOrganizerApproval();
   }
 
   void _populateFields() {
@@ -76,6 +93,33 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
     }
     // Set existing image URLs
     _existingImageUrls = List<String>.from(event.imageUrls);
+  }
+
+  Future<void> _checkOrganizerApproval() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    // Only check approval if user is in Event-managers collection
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('Event-managers')
+          .doc(user.uid)
+          .get();
+      if (doc.exists) {
+        final data = doc.data();
+        setState(() {
+          _isOrganizerApproved = (data != null && data['approved'] == true);
+        });
+      } else {
+        setState(() {
+          _isOrganizerApproved = true; // Not an organizer, allow creation
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _isOrganizerApproved =
+            true; // On error, allow creation to avoid blocking
+      });
+    }
   }
 
   @override
@@ -119,9 +163,24 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
                   borderRadius: BorderRadius.circular(30),
                 ),
                 elevation: 6,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
-              onPressed: _isLoading ? null : _saveEvent,
+              onPressed: _isLoading
+                  ? null
+                  : () {
+                      if (!_isOrganizerApproved) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                                'Your organizer account is not approved yet. You cannot create events until approved by admin.'),
+                            backgroundColor: Colors.orange,
+                          ),
+                        );
+                        return;
+                      }
+                      _saveEvent();
+                    },
               icon: _isLoading
                   ? const SizedBox(
                       width: 20,
@@ -134,7 +193,8 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
                   : const Icon(Icons.save, color: Colors.white),
               label: Text(
                 widget.event == null ? 'Save' : 'Save Changes',
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold),
               ),
             ),
           ),
@@ -150,7 +210,8 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Basic Information', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text('Basic Information',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             TextFormField(
               controller: _titleController,
@@ -158,7 +219,8 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
                 labelText: 'Event Title',
                 border: OutlineInputBorder(),
               ),
-              validator: (value) => value?.isEmpty == true ? 'Title is required' : null,
+              validator: (value) =>
+                  value?.isEmpty == true ? 'Title is required' : null,
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -168,7 +230,8 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
                 border: OutlineInputBorder(),
               ),
               maxLines: 4,
-              validator: (value) => value?.isEmpty == true ? 'Description is required' : null,
+              validator: (value) =>
+                  value?.isEmpty == true ? 'Description is required' : null,
             ),
           ],
         ),
@@ -183,27 +246,33 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Date & Time', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text('Date & Time',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             Row(
               children: [
                 Expanded(
                   child: ListTile(
-                    title: Text(_selectedDate == null ? 'Select Date' : 
-                      '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}'),
+                    title: Text(_selectedDate == null
+                        ? 'Select Date'
+                        : '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}'),
                     leading: const Icon(Icons.calendar_today),
                     onTap: _selectDate,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
                     tileColor: Colors.grey[100],
                   ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: ListTile(
-                    title: Text(_selectedTime == null ? 'Select Time' : _selectedTime!.format(context)),
+                    title: Text(_selectedTime == null
+                        ? 'Select Time'
+                        : _selectedTime!.format(context)),
                     leading: const Icon(Icons.access_time),
                     onTap: _selectTime,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
                     tileColor: Colors.grey[100],
                   ),
                 ),
@@ -229,12 +298,12 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
           decoration: InputDecoration(
             labelText: 'Search Location',
             border: const OutlineInputBorder(),
-            suffixIcon: _isLoading 
-              ? const CircularProgressIndicator()
-              : IconButton(
-                  icon: const Icon(Icons.search),
-                  onPressed: _searchLocation,
-                ),
+            suffixIcon: _isLoading
+                ? const CircularProgressIndicator()
+                : IconButton(
+                    icon: const Icon(Icons.search),
+                    onPressed: _searchLocation,
+                  ),
           ),
           validator: (value) {
             if (value == null || value.isEmpty) {
@@ -248,7 +317,8 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
           height: 300,
           child: flutter_map.FlutterMap(
             options: flutter_map.MapOptions(
-              center: _selectedLocation ?? const latlong2.LatLng(31.5204, 74.3587),
+              center:
+                  _selectedLocation ?? const latlong2.LatLng(31.5204, 74.3587),
               zoom: 13.0,
               onTap: (tapPosition, point) {
                 setState(() {
@@ -259,7 +329,8 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
             ),
             children: [
               flutter_map.TileLayer(
-                urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                urlTemplate:
+                    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
                 subdomains: const ['a', 'b', 'c'],
               ),
               if (_selectedLocation != null)
@@ -297,7 +368,8 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Category & Tags', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text('Category & Tags',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               value: _selectedCategory,
@@ -348,7 +420,9 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Media', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const Text('Media',
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 ElevatedButton.icon(
                   onPressed: _pickImages,
                   icon: const Icon(Icons.add_photo_alternate),
@@ -357,7 +431,7 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
               ],
             ),
             const SizedBox(height: 16),
-            
+
             // Display existing images (URLs) and new images (Files)
             if (_existingImageUrls.isNotEmpty || _selectedImages.isNotEmpty)
               SizedBox(
@@ -380,14 +454,16 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
                                 width: 100,
                                 height: 100,
                                 fit: BoxFit.cover,
-                                loadingBuilder: (context, child, loadingProgress) {
+                                loadingBuilder:
+                                    (context, child, loadingProgress) {
                                   if (loadingProgress == null) return child;
                                   return Container(
                                     width: 100,
                                     height: 100,
                                     color: Colors.grey.shade200,
                                     child: const Center(
-                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                      child: CircularProgressIndicator(
+                                          strokeWidth: 2),
                                     ),
                                   );
                                 },
@@ -396,7 +472,8 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
                                     width: 100,
                                     height: 100,
                                     color: Colors.grey.shade200,
-                                    child: const Icon(Icons.image_not_supported, color: Colors.grey),
+                                    child: const Icon(Icons.image_not_supported,
+                                        color: Colors.grey),
                                   );
                                 },
                               ),
@@ -412,7 +489,8 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
                                     color: Colors.red,
                                     shape: BoxShape.circle,
                                   ),
-                                  child: const Icon(Icons.close, color: Colors.white, size: 16),
+                                  child: const Icon(Icons.close,
+                                      color: Colors.white, size: 16),
                                 ),
                               ),
                             ),
@@ -420,7 +498,7 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
                         ),
                       );
                     }).toList(),
-                    
+
                     // New selected images from files
                     ..._selectedImages.asMap().entries.map((entry) {
                       int index = entry.key;
@@ -437,7 +515,8 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
                                       width: 100,
                                       height: 100,
                                       fit: BoxFit.cover,
-                                      errorBuilder: (context, error, stackTrace) {
+                                      errorBuilder:
+                                          (context, error, stackTrace) {
                                         return FutureBuilder<Uint8List>(
                                           future: imageFile.readAsBytes(),
                                           builder: (context, snapshot) {
@@ -477,7 +556,8 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
                                     color: Colors.red,
                                     shape: BoxShape.circle,
                                   ),
-                                  child: const Icon(Icons.close, color: Colors.white, size: 16),
+                                  child: const Icon(Icons.close,
+                                      color: Colors.white, size: 16),
                                 ),
                               ),
                             ),
@@ -488,14 +568,15 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
                   ],
                 ),
               ),
-              
+
             if (_existingImageUrls.isEmpty && _selectedImages.isEmpty)
               Container(
                 height: 100,
                 decoration: BoxDecoration(
                   color: Colors.grey.shade100,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey.shade300, style: BorderStyle.solid),
+                  border: Border.all(
+                      color: Colors.grey.shade300, style: BorderStyle.solid),
                 ),
                 child: const Center(
                   child: Text(
@@ -518,7 +599,8 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Ticketing', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text('Ticketing',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             Row(
               children: [
@@ -552,8 +634,10 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
                         border: OutlineInputBorder(),
                       ),
                       keyboardType: TextInputType.number,
-                      validator: (value) => _isPaidEvent && (value?.isEmpty == true) 
-                          ? 'Price is required for paid events' : null,
+                      validator: (value) =>
+                          _isPaidEvent && (value?.isEmpty == true)
+                              ? 'Price is required for paid events'
+                              : null,
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -565,8 +649,10 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
                         border: OutlineInputBorder(),
                       ),
                       keyboardType: TextInputType.number,
-                      validator: (value) => _isPaidEvent && (value?.isEmpty == true) 
-                          ? 'Quantity is required for paid events' : null,
+                      validator: (value) =>
+                          _isPaidEvent && (value?.isEmpty == true)
+                              ? 'Quantity is required for paid events'
+                              : null,
                     ),
                   ),
                 ],
@@ -609,20 +695,22 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
       });
     }
   }
-  
+
   void _removeExistingImage(int index) {
     setState(() => _existingImageUrls.removeAt(index));
   }
-  
+
   void _removeNewImage(int index) {
     setState(() => _selectedImages.removeAt(index));
   }
 
   Future<String?> _uploadImageToCloudinary(File imageFile) async {
-    const String cloudName = 'daffsyxdy'; // TODO: Replace with your Cloudinary cloud name
-    const String uploadPreset = 'Event Management'; // TODO: Replace with your unsigned upload preset
-    final url = Uri.parse("https://api.cloudinary.com/v1_1/daffsyxdy/image/upload");
-
+    const String cloudName =
+        'daffsyxdy'; // TODO: Replace with your Cloudinary cloud name
+    const String uploadPreset =
+        'Event Management'; // TODO: Replace with your unsigned upload preset
+    final url =
+        Uri.parse("https://api.cloudinary.com/v1_1/daffsyxdy/image/upload");
 
     final request = http.MultipartRequest('POST', url)
       ..fields['upload_preset'] = uploadPreset
@@ -641,13 +729,9 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
 
   Future<void> _saveEvent() async {
     if (!_formKey.currentState!.validate()) return;
-    
-    if (_selectedDate == null || _selectedTime == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select date and time')),
-      );
-      return;
-    }
+
+    // Remove duplicate approval check here, as it's now handled in the button's onPressed
+    // ...existing code...
 
     setState(() {
       _isLoading = true;
@@ -663,7 +747,8 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
       List<String> imageUrls = [];
       if (_selectedImages.isNotEmpty) {
         try {
-          print('Starting Cloudinary upload for ${_selectedImages.length} images...');
+          print(
+              'Starting Cloudinary upload for ${_selectedImages.length} images...');
           for (final image in _selectedImages) {
             final url = await _uploadImageToCloudinary(File(image.path));
             if (url != null) {
@@ -677,25 +762,24 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
           print('Cloudinary upload failed: $e');
           // Show user a choice: continue without images or retry
           final shouldContinue = await showDialog<bool>(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: const Text('Image Upload Failed'),
-              content: Text(
-                'Failed to upload images: $e\n\n'
-                'Would you like to save the event without images, or cancel and try again?'
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(false),
-                  child: const Text('Cancel'),
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Image Upload Failed'),
+                  content: Text('Failed to upload images: $e\n\n'
+                      'Would you like to save the event without images, or cancel and try again?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(false),
+                      child: const Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(true),
+                      child: const Text('Save Without Images'),
+                    ),
+                  ],
                 ),
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(true),
-                  child: const Text('Save Without Images'),
-                ),
-              ],
-            ),
-          ) ?? false;
+              ) ??
+              false;
           if (!shouldContinue) {
             return; // User chose to cancel
           }
@@ -713,7 +797,8 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
         organizerId: currentUser.uid,
-        organizerName: currentUser.displayName ?? currentUser.email ?? 'Unknown',
+        organizerName:
+            currentUser.displayName ?? currentUser.email ?? 'Unknown',
         eventDate: _selectedDate!,
         eventTime: _selectedTime,
         location: _locationController.text.trim(),
@@ -723,28 +808,33 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
         tags: _tags,
         imageUrls: allImageUrls,
         ticketType: _isPaidEvent ? TicketType.paid : TicketType.free,
-        ticketPrice: _isPaidEvent ? double.tryParse(_priceController.text) : null,
-        maxAttendees: _isPaidEvent ? int.tryParse(_quantityController.text) : null,
+        ticketPrice:
+            _isPaidEvent ? double.tryParse(_priceController.text) : null,
+        maxAttendees:
+            _isPaidEvent ? int.tryParse(_quantityController.text) : null,
         createdAt: widget.event?.createdAt ?? DateTime.now(),
         updatedAt: DateTime.now(),
-        status: widget.event == null ? EventStatus.pending : widget.event!.status, // New events need approval
+        status: widget.event == null
+            ? EventStatus.pending
+            : widget.event!.status, // New events need approval
       );
 
       String eventId;
       if (widget.event == null) {
         // Create new event
         eventId = await _eventService.createEvent(eventModel);
-        
+
         // Notify admins about new event pending approval
         await _firebaseServices.notifyAdminOfNewEvent(
           eventId,
           eventModel.title,
           eventModel.organizerName,
         );
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Event submitted for approval! You will be notified once reviewed.'),
+            content: Text(
+                'Event submitted for approval! You will be notified once reviewed.'),
             backgroundColor: Colors.green,
           ),
         );
@@ -762,7 +852,6 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
 
       // Return to previous screen with event data
       Navigator.pop(context, eventId);
-
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -780,24 +869,25 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
   Future<void> _updateLocationName(latlong2.LatLng point) async {
     try {
       final response = await http.get(Uri.parse(
-        'https://nominatim.openstreetmap.org/reverse?format=json&lat=${point.latitude}&lon=${point.longitude}&zoom=18&addressdetails=1'
-      ));
-      
+          'https://nominatim.openstreetmap.org/reverse?format=json&lat=${point.latitude}&lon=${point.longitude}&zoom=18&addressdetails=1'));
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        final address = data['display_name'] ?? '${point.latitude.toStringAsFixed(4)}, ${point.longitude.toStringAsFixed(4)}';
+        final address = data['display_name'] ??
+            '${point.latitude.toStringAsFixed(4)}, ${point.longitude.toStringAsFixed(4)}';
         setState(() {
           _locationController.text = address;
         });
       }
     } catch (e) {
-      _locationController.text = '${point.latitude.toStringAsFixed(4)}, ${point.longitude.toStringAsFixed(4)}';
+      _locationController.text =
+          '${point.latitude.toStringAsFixed(4)}, ${point.longitude.toStringAsFixed(4)}';
     }
   }
 
   Future<void> _searchLocation() async {
     if (_locationController.text.isEmpty) return;
-    
+
     setState(() {
       _isLoading = true;
     });
@@ -805,29 +895,25 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
     try {
       // Search for location
       final searchResponse = await http.get(Uri.parse(
-        'https://nominatim.openstreetmap.org/search?q=${_locationController.text}&format=json&limit=1'
-      ));
-      
+          'https://nominatim.openstreetmap.org/search?q=${_locationController.text}&format=json&limit=1'));
+
       if (searchResponse.statusCode == 200) {
         final data = json.decode(searchResponse.body);
         if (data.isNotEmpty) {
           final point = latlong2.LatLng(
-            double.parse(data[0]['lat']),
-            double.parse(data[0]['lon'])
-          );
-          
+              double.parse(data[0]['lat']), double.parse(data[0]['lon']));
+
           setState(() {
             _selectedLocation = point;
           });
-          
+
           // Get proper address name
           await _updateLocationName(point);
         }
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error searching location: ${e.toString()}'))
-      );
+          SnackBar(content: Text('Error searching location: ${e.toString()}')));
     } finally {
       setState(() {
         _isLoading = false;

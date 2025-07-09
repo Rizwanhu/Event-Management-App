@@ -3,7 +3,7 @@ import '../models/chat_message.dart';
 import '../widgets/chat_message_widget.dart';
 
 class ChatTab extends StatelessWidget {
-  final List<ChatMessage> messages;
+  final Stream<List<ChatMessage>> chatStream;
   final int onlineCount;
   final ScrollController chatScrollController;
   final TextEditingController messageController;
@@ -11,7 +11,7 @@ class ChatTab extends StatelessWidget {
 
   const ChatTab({
     super.key,
-    required this.messages,
+    required this.chatStream,
     required this.onlineCount,
     required this.chatScrollController,
     required this.messageController,
@@ -57,19 +57,25 @@ class ChatTab extends StatelessWidget {
             ],
           ),
         ),
-        
+
         // Chat messages
         Expanded(
-          child: ListView.builder(
-            controller: chatScrollController,
-            padding: const EdgeInsets.all(16),
-            itemCount: messages.length,
-            itemBuilder: (context, index) {
-              return ChatMessageWidget(message: messages[index]);
+          child: StreamBuilder<List<ChatMessage>>(
+            stream: chatStream,
+            builder: (context, snapshot) {
+              final messages = snapshot.data ?? [];
+              return ListView.builder(
+                controller: chatScrollController,
+                padding: const EdgeInsets.all(16),
+                itemCount: messages.length,
+                itemBuilder: (context, index) {
+                  return ChatMessageWidget(message: messages[index]);
+                },
+              );
             },
           ),
         ),
-        
+
         // Message input
         Container(
           padding: const EdgeInsets.all(16),

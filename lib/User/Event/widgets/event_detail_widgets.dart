@@ -148,7 +148,8 @@ class EventPassTypeCard extends StatelessWidget {
                       if (isFree) ...[
                         const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
                             color: Colors.green,
                             borderRadius: BorderRadius.circular(8),
@@ -219,7 +220,9 @@ class EventSocialActions extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: isLiked ? Colors.red.withOpacity(0.1) : Colors.grey.withOpacity(0.1),
+              color: isLiked
+                  ? Colors.red.withOpacity(0.1)
+                  : Colors.grey.withOpacity(0.1),
               borderRadius: BorderRadius.circular(25),
               border: Border.all(
                 color: isLiked ? Colors.red : Colors.grey,
@@ -246,7 +249,7 @@ class EventSocialActions extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 12),
-        
+
         // Comment Button
         GestureDetector(
           onTap: onCommentPressed,
@@ -260,7 +263,8 @@ class EventSocialActions extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.comment_outlined, color: Colors.grey, size: 20),
+                const Icon(Icons.comment_outlined,
+                    color: Colors.grey, size: 20),
                 const SizedBox(width: 6),
                 Text(
                   '$commentCount',
@@ -274,7 +278,7 @@ class EventSocialActions extends StatelessWidget {
           ),
         ),
         const Spacer(),
-        
+
         // Share Button
         IconButton(
           onPressed: onSharePressed,
@@ -286,7 +290,18 @@ class EventSocialActions extends StatelessWidget {
 }
 
 class EventQAChatSection extends StatelessWidget {
-  const EventQAChatSection({Key? key}) : super(key: key);
+  final String eventId;
+  final String eventTitle;
+  final bool isChatEnabled;
+  final bool isQAEnabled;
+
+  const EventQAChatSection({
+    Key? key,
+    required this.eventId,
+    required this.eventTitle,
+    this.isChatEnabled = true,
+    this.isQAEnabled = true,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -330,9 +345,10 @@ class EventQAChatSection extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const EventQNAScreen(
-                          eventTitle: 'Summer Music Festival 2024',
-                          isChatEnabled: true,
+                        builder: (context) => EventQNAScreen(
+                          eventId: eventId,
+                          eventTitle: eventTitle,
+                          isChatEnabled: false,
                           isQAEnabled: true,
                         ),
                       ),
@@ -357,10 +373,11 @@ class EventQAChatSection extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const EventQNAScreen(
-                          eventTitle: 'Summer Music Festival 2024',
+                        builder: (context) => EventQNAScreen(
+                          eventId: eventId,
+                          eventTitle: eventTitle,
                           isChatEnabled: true,
-                          isQAEnabled: true,
+                          isQAEnabled: false,
                         ),
                       ),
                     );
@@ -499,9 +516,9 @@ class EventReviewsSection extends StatelessWidget {
                     ),
                   ],
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 // Rating Summary Card
                 Container(
                   padding: const EdgeInsets.all(16),
@@ -526,9 +543,10 @@ class EventReviewsSection extends StatelessWidget {
                           Row(
                             children: List.generate(5, (index) {
                               return Icon(
-                                index < 4 ? Icons.star_rounded : 
-                                index < 4.2 ? Icons.star_half_rounded : Icons.star_border_rounded,
-                                color: Colors.amber.shade600,
+                                Icons.star_rounded,
+                                color: index < 4
+                                    ? Colors.amber.shade600
+                                    : Colors.grey.shade300,
                                 size: 20,
                               );
                             }),
@@ -544,9 +562,9 @@ class EventReviewsSection extends StatelessWidget {
                           ),
                         ],
                       ),
-                      
+
                       const SizedBox(width: 24),
-                      
+
                       // Rating Distribution
                       Expanded(
                         child: Column(
@@ -565,7 +583,7 @@ class EventReviewsSection extends StatelessWidget {
               ],
             ),
           ),
-          
+
           // Action Buttons Section
           Padding(
             padding: const EdgeInsets.all(20),
@@ -610,7 +628,8 @@ class EventReviewsSection extends StatelessWidget {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      icon: const Icon(Icons.rate_review_rounded, color: Colors.white, size: 22),
+                      icon: const Icon(Icons.rate_review_rounded,
+                          color: Colors.white, size: 22),
                       label: const Text(
                         'Write Your Review',
                         style: TextStyle(
@@ -623,7 +642,7 @@ class EventReviewsSection extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                 ],
-                
+
                 // View All Reviews Button
                 Container(
                   width: double.infinity,
@@ -644,12 +663,14 @@ class EventReviewsSection extends StatelessWidget {
                     style: OutlinedButton.styleFrom(
                       backgroundColor: Colors.white,
                       foregroundColor: Colors.amber.shade700,
-                      side: BorderSide(color: Colors.amber.shade300, width: 1.5),
+                      side:
+                          BorderSide(color: Colors.amber.shade300, width: 1.5),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    icon: Icon(Icons.reviews_rounded, color: Colors.amber.shade700, size: 22),
+                    icon: Icon(Icons.reviews_rounded,
+                        color: Colors.amber.shade700, size: 22),
                     label: Text(
                       'View All Reviews',
                       style: TextStyle(
@@ -660,9 +681,9 @@ class EventReviewsSection extends StatelessWidget {
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 20),
-                
+
                 // Featured Review Preview
                 _buildFeaturedReviewPreview(context),
               ],
@@ -675,7 +696,7 @@ class EventReviewsSection extends StatelessWidget {
 
   Widget _buildRatingDistributionBar(int stars, int count, int totalReviews) {
     double percentage = count / totalReviews;
-    
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
@@ -781,7 +802,6 @@ class EventReviewsSection extends StatelessWidget {
               ],
             ),
           ),
-          
           // Review Content
           Padding(
             padding: const EdgeInsets.all(16),
@@ -796,7 +816,10 @@ class EventReviewsSection extends StatelessWidget {
                       height: 44,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [Colors.deepPurple.shade400, Colors.purple.shade500],
+                          colors: [
+                            Colors.deepPurple.shade400,
+                            Colors.purple.shade500
+                          ],
                         ),
                         borderRadius: BorderRadius.circular(22),
                         border: Border.all(color: Colors.white, width: 2),
@@ -836,11 +859,13 @@ class EventReviewsSection extends StatelessWidget {
                               ),
                               const SizedBox(width: 6),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
                                   color: Colors.green.shade100,
                                   borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: Colors.green.shade300),
+                                  border:
+                                      Border.all(color: Colors.green.shade300),
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
@@ -913,9 +938,7 @@ class EventReviewsSection extends StatelessWidget {
                     ),
                   ],
                 ),
-                
                 const SizedBox(height: 12),
-                
                 // Review Text
                 Text(
                   'Amazing event! The music was absolutely fantastic and the venue was perfect. The organizers did an incredible job with everything from sound quality to crowd management. Would definitely attend again! 🎵✨',
@@ -925,16 +948,14 @@ class EventReviewsSection extends StatelessWidget {
                     height: 1.4,
                   ),
                 ),
-                
                 const SizedBox(height: 12),
-                
                 // View More Button
                 GestureDetector(
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const PostEventReviewScreen(
+                        builder: (context) => PostEventReviewScreen(
                           eventTitle: 'Summer Music Festival 2024',
                           eventId: 'event_123',
                           hasUserReviewed: true,
@@ -943,7 +964,8 @@ class EventReviewsSection extends StatelessWidget {
                     );
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: Colors.grey.shade50,
                       borderRadius: BorderRadius.circular(20),
@@ -1013,7 +1035,14 @@ class EventInfoRow extends StatelessWidget {
 }
 
 class EventJoinChatButton extends StatelessWidget {
-  const EventJoinChatButton({Key? key}) : super(key: key);
+  final String eventId;
+  final String eventTitle;
+
+  const EventJoinChatButton({
+    Key? key,
+    required this.eventId,
+    required this.eventTitle,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -1024,8 +1053,9 @@ class EventJoinChatButton extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => const EventQNAScreen(
-                eventTitle: 'Summer Music Festival 2024',
+              builder: (context) => EventQNAScreen(
+                eventId: eventId,
+                eventTitle: eventTitle,
                 isChatEnabled: true,
                 isQAEnabled: true,
               ),
@@ -1043,7 +1073,8 @@ class EventJoinChatButton extends StatelessWidget {
           ),
         ),
       ),
-    );  }
+    );
+  }
 }
 
 class ShareOptionButton extends StatelessWidget {

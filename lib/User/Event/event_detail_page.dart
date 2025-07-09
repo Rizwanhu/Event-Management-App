@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'EventQNAScreen.dart';
-import 'PostEventReviewScreen.dart';
+// import 'EventQNAScreen.dart';
+// import 'PostEventReviewScreen.dart';
 import 'widgets/event_detail_widgets.dart';
 import 'comments_page.dart';
 import 'models/event.dart';
 
 class EventDetailPage extends StatefulWidget {
   final Event event;
-  
+
   const EventDetailPage({
     super.key,
     required this.event,
@@ -58,7 +58,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
           children: [
             // Event Banner/Media Section
             EventMediaSection(imageUrl: widget.event.bannerImage),
-            
+
             // Event Details
             Padding(
               padding: const EdgeInsets.all(20),
@@ -74,30 +74,29 @@ class _EventDetailPageState extends State<EventDetailPage> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  
+
                   // Event Info
                   EventInfoRow(
-                    icon: Icons.calendar_today,
-                    text: '${widget.event.date} • ${widget.event.time}'
-                  ),
+                      icon: Icons.calendar_today,
+                      text: '${widget.event.date} • ${widget.event.time}'),
                   const SizedBox(height: 8),
                   GestureDetector(
                     onTap: () => _showLocationMap(),
                     child: EventInfoRow(
                       icon: Icons.location_on,
-                      text: widget.event.location, 
+                      text: widget.event.location,
                       isClickable: true,
                     ),
                   ),
                   const SizedBox(height: 20),
-                  
+
                   // Organizer Section
                   EventOrganizerSection(
                     organizerName: widget.event.organizer,
                     organizerImage: widget.event.organizerImage,
                   ),
                   const SizedBox(height: 20),
-                  
+
                   // Description
                   const Text(
                     'Description',
@@ -116,7 +115,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  
+
                   // Pass Types Section
                   const Text(
                     'Pass Types',
@@ -126,25 +125,27 @@ class _EventDetailPageState extends State<EventDetailPage> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  
+
                   // Dynamically generate pass type cards
-                  ...widget.event.passTypes.map((passType) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: EventPassTypeCard(
-                      title: passType.title,
-                      price: passType.price,
-                      description: passType.description,
-                      isFree: passType.isFree,
-                      isSelected: selectedPassType == passType.title,
-                      onSelect: (title) {
-                        setState(() {
-                          selectedPassType = title;
-                        });
-                      },
-                    ),
-                  )).toList(),
+                  ...widget.event.passTypes
+                      .map((passType) => Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: EventPassTypeCard(
+                              title: passType.title,
+                              price: passType.price,
+                              description: passType.description,
+                              isFree: passType.isFree,
+                              isSelected: selectedPassType == passType.title,
+                              onSelect: (title) {
+                                setState(() {
+                                  selectedPassType = title;
+                                });
+                              },
+                            ),
+                          ))
+                      .toList(),
                   const SizedBox(height: 20),
-                  
+
                   // Social Actions
                   EventSocialActions(
                     isLiked: isLiked,
@@ -160,20 +161,28 @@ class _EventDetailPageState extends State<EventDetailPage> {
                     onSharePressed: () => _showShareOptions(),
                   ),
                   const SizedBox(height: 20),
-                  
+
                   // Q&A and Chat Section
-                  const EventQAChatSection(),
-                  const SizedBox(height: 20),
-                  
-                  // Reviews Section (for past events)
-                  if (isEventPast) EventReviewsSection(
-                    hasUserAttended: hasUserAttended,
-                    hasUserReviewed: hasUserReviewed,
+                  EventQAChatSection(
+                    eventId: widget.event.id,
+                    eventTitle: widget.event.title,
                   ),
+                  const SizedBox(height: 20),
+
+                  // Reviews Section (for past events)
+                  if (isEventPast)
+                    EventReviewsSection(
+                      hasUserAttended: hasUserAttended,
+                      hasUserReviewed: hasUserReviewed,
+                    ),
                   if (isEventPast) const SizedBox(height: 20),
-                  
+
                   // Join Chat Button (shown only if RSVP'd)
-                  if (isRSVPd) const EventJoinChatButton(),
+                  if (isRSVPd)
+                    EventJoinChatButton(
+                      eventId: widget.event.id,
+                      eventTitle: widget.event.title,
+                    ),
                   const SizedBox(height: 30),
                 ],
               ),
@@ -181,7 +190,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
           ],
         ),
       ),
-      
+
       // Bottom Action Button
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(20),
@@ -201,7 +210,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
           child: ElevatedButton(
             onPressed: () => _handleMainAction(),
             style: ElevatedButton.styleFrom(
-              backgroundColor: selectedPassType == 'Free RSVP' ? Colors.green : Colors.deepPurple,
+              backgroundColor: selectedPassType == 'Free RSVP'
+                  ? Colors.green
+                  : Colors.deepPurple,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
@@ -290,7 +301,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => const CommentsPage(),
+        builder: (context) => CommentsPage(
+          eventId: widget.event.id,
+          eventTitle: widget.event.title,
+        ),
       ),
     );
   }
@@ -303,7 +317,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: const [
-            Text('Share Event', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text('Share Event',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -343,3 +358,15 @@ class _EventDetailPageState extends State<EventDetailPage> {
     );
   }
 }
+
+// Example: If you have a navigation to EventQNAScreen somewhere, e.g. in EventQAChatSection or a button callback,
+// update it like this:
+
+// Navigator.push(
+//   context,
+//   MaterialPageRoute(
+//     builder: (context) => EventQNAScreen(
+//       eventTitle: widget.event.title,
+//     ),
+//   ),
+// );

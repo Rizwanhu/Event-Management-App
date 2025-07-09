@@ -1,16 +1,20 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'models/chat_message.dart';
 import 'models/qa_item.dart';
 // import 'screens/chat_tab.dart';
 // import 'screens/qa_tab.dart';
 
 class EventQNAScreen extends StatefulWidget {
+  final String eventId;
   final String eventTitle;
   final bool isChatEnabled;
   final bool isQAEnabled;
 
   const EventQNAScreen({
     super.key,
+    required this.eventId,
     required this.eventTitle,
     this.isChatEnabled = true,
     this.isQAEnabled = true,
@@ -26,9 +30,9 @@ class _EventQNAScreenState extends State<EventQNAScreen>
   final TextEditingController _messageController = TextEditingController();
   final TextEditingController _questionController = TextEditingController();
   final ScrollController _chatScrollController = ScrollController();
-  
-  List<ChatMessage> messages = [];
-  List<QAItem> qaItems = [];
+
+  late Stream<List<ChatMessage>> chatStream;
+  late Stream<List<QAItem>> qaStream;
   int onlineCount = 24;
 
   @override
@@ -37,75 +41,110 @@ class _EventQNAScreenState extends State<EventQNAScreen>
     int tabLength = 0;
     if (widget.isChatEnabled) tabLength++;
     if (widget.isQAEnabled) tabLength++;
-    
     _tabController = TabController(length: tabLength, vsync: this);
-    _loadMockData();
+
+    // Listen to Firestore for chat and Q&A
+    chatStream = FirebaseFirestore.instance
+        .collection('events')
+        .doc(widget.eventId)
+        .collection('chat_messages')
+        .orderBy('timestamp')
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((doc) => ChatMessage(
+                  id: doc.id,
+                  userName: doc['userName'],
+                  message: doc['message'],
+                  timestamp: (doc['timestamp'] as Timestamp).toDate(),
+                  isOrganizer: doc['isOrganizer'] ?? false,
+                ))
+            .toList());
+
+    qaStream = FirebaseFirestore.instance
+        .collection('events')
+        .doc(widget.eventId)
+        .collection('qa_items')
+        .orderBy('askedAt', descending: true)
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((doc) => QAItem(
+                  id: doc.id,
+                  question: doc['question'],
+                  askedBy: doc['askedBy'],
+                  askedAt: (doc['askedAt'] as Timestamp).toDate(),
+                  answer: doc['answer'],
+                  answeredBy: doc['answeredBy'],
+                  answeredAt: doc['answeredAt'] != null
+                      ? (doc['answeredAt'] as Timestamp).toDate()
+                      : null,
+                  upvotes: doc['upvotes'] ?? 0,
+                ))
+            .toList());
+    // _loadMockData();
   }
 
-  void _loadMockData() {
-    // Mock chat messages
-    messages = [
-      ChatMessage(
-        id: '1',
-        userName: 'Alex Johnson',
-        message: 'Hey everyone! Super excited for this event 🎉',
-        timestamp: DateTime.now().subtract(const Duration(minutes: 30)),
-        isOrganizer: false,
-      ),
-      ChatMessage(
-        id: '2',
-        userName: 'MusicEvents Inc.',
-        message: 'Welcome to the pre-event chat! Feel free to ask any questions.',
-        timestamp: DateTime.now().subtract(const Duration(minutes: 25)),
-        isOrganizer: true,
-      ),
-      ChatMessage(
-        id: '3',
-        userName: 'Sarah Wilson',
-        message: 'What time do the doors open?',
-        timestamp: DateTime.now().subtract(const Duration(minutes: 20)),
-        isOrganizer: false,
-      ),
-      ChatMessage(
-        id: '4',
-        userName: 'Mike Chen',
-        message: 'Can\'t wait to see the lineup! This is going to be amazing 🎵',
-        timestamp: DateTime.now().subtract(const Duration(minutes: 15)),
-        isOrganizer: false,
-      ),
-    ];
-
-    // Mock Q&A items
-    qaItems = [
-      QAItem(
-        id: '1',
-        question: 'What time do the doors open?',
-        askedBy: 'Sarah Wilson',
-        askedAt: DateTime.now().subtract(const Duration(hours: 2)),
-        answer: 'Doors open at 6:00 PM, one hour before the show starts.',
-        answeredBy: 'MusicEvents Inc.',
-        answeredAt: DateTime.now().subtract(const Duration(hours: 1)),
-        upvotes: 12,
-      ),
-      QAItem(
-        id: '2',
-        question: 'Is there parking available at the venue?',
-        askedBy: 'John Doe',
-        askedAt: DateTime.now().subtract(const Duration(hours: 3)),
-        answer: 'Yes, there\'s a parking garage next to Madison Square Garden. We recommend arriving early as it fills up quickly.',
-        answeredBy: 'MusicEvents Inc.',
-        answeredAt: DateTime.now().subtract(const Duration(hours: 2, minutes: 30)),
-        upvotes: 8,
-      ),
-      QAItem(
-        id: '3',
-        question: 'Will there be food and drinks available?',
-        askedBy: 'Emma Davis',
-        askedAt: DateTime.now().subtract(const Duration(minutes: 45)),
-        upvotes: 5,
-      ),
-    ];
-  }
+  // void _loadMockData() {
+  //   // Mock chat messages
+  //   messages = [
+  //     ChatMessage(
+  //       id: '1',
+  //       userName: 'Alex Johnson',
+  //       message: 'Hey everyone! Super excited for this event 🎉',
+  //       timestamp: DateTime.now().subtract(const Duration(minutes: 30)),
+  //       isOrganizer: false,
+  //     ),
+  //     ChatMessage(
+  //       id: '2',
+  //       userName: 'MusicEvents Inc.',
+  //       message: 'Welcome to the pre-event chat! Feel free to ask any questions.',
+  //       timestamp: DateTime.now().subtract(const Duration(minutes: 25)),
+  //       isOrganizer: true,
+  //     ),
+  //     ChatMessage(
+  //       id: '3',
+  //       userName: 'Sarah Wilson',
+  //       message: 'What time do the doors open?',
+  //       timestamp: DateTime.now().subtract(const Duration(minutes: 20)),
+  //       isOrganizer: false,
+  //     ),
+  //     ChatMessage(
+  //       id: '4',
+  //       userName: 'Mike Chen',
+  //       message: 'Can\'t wait to see the lineup! This is going to be amazing 🎵',
+  //       timestamp: DateTime.now().subtract(const Duration(minutes: 15)),
+  //       isOrganizer: false,
+  //     ),
+  //   // Mock Q&A items
+  //   qaItems = [
+  //     QAItem(
+  //       id: '1',
+  //       question: 'What time do the doors open?',
+  //       askedBy: 'Sarah Wilson',
+  //       askedAt: DateTime.now().subtract(const Duration(hours: 2)),
+  //       answer: 'Doors open at 6:00 PM, one hour before the show starts.',
+  //       answeredBy: 'MusicEvents Inc.',
+  //       answeredAt: DateTime.now().subtract(const Duration(hours: 1)),
+  //       upvotes: 12,
+  //     ),
+  //     QAItem(
+  //       id: '2',
+  //       question: 'Is there parking available at the venue?',
+  //       askedBy: 'John Doe',
+  //       askedAt: DateTime.now().subtract(const Duration(hours: 3)),
+  //       answer: 'Yes, there\'s a parking garage next to Madison Square Garden. We recommend arriving early as it fills up quickly.',
+  //       answeredBy: 'MusicEvents Inc.',
+  //       answeredAt: DateTime.now().subtract(const Duration(hours: 2, minutes: 30)),
+  //       upvotes: 8,
+  //     ),
+  //     QAItem(
+  //       id: '3',
+  //       question: 'Will there be food and drinks available?',
+  //       askedBy: 'Emma Davis',
+  //       askedAt: DateTime.now().subtract(const Duration(minutes: 45)),
+  //       upvotes: 5,
+  //     ),
+  //   ];
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -138,7 +177,7 @@ class _EventQNAScreenState extends State<EventQNAScreen>
         ),
       ));
     }
-    
+
     if (widget.isQAEnabled) {
       tabs.add(const Tab(
         child: Row(
@@ -236,19 +275,25 @@ class _EventQNAScreenState extends State<EventQNAScreen>
             ],
           ),
         ),
-        
+
         // Chat messages
         Expanded(
-          child: ListView.builder(
-            controller: _chatScrollController,
-            padding: const EdgeInsets.all(16),
-            itemCount: messages.length,
-            itemBuilder: (context, index) {
-              return _buildChatMessage(messages[index]);
+          child: StreamBuilder<List<ChatMessage>>(
+            stream: chatStream,
+            builder: (context, snapshot) {
+              final messages = snapshot.data ?? [];
+              return ListView.builder(
+                controller: _chatScrollController,
+                padding: const EdgeInsets.all(16),
+                itemCount: messages.length,
+                itemBuilder: (context, index) {
+                  return _buildChatMessage(messages[index]);
+                },
+              );
             },
           ),
         ),
-        
+
         // Message input
         _buildMessageInput(),
       ],
@@ -284,17 +329,21 @@ class _EventQNAScreenState extends State<EventQNAScreen>
             ],
           ),
         ),
-        
+
         // Q&A List
         Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: qaItems.length + 1, // +1 for the question input
-            itemBuilder: (context, index) {
-              if (index == 0) {
-                return _buildQuestionInput();
-              }
-              return _buildQAItem(qaItems[index - 1]);
+          child: StreamBuilder<List<QAItem>>(
+            stream: qaStream,
+            builder: (context, snapshot) {
+              final qaItems = snapshot.data ?? [];
+              return ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: qaItems.length + 1,
+                itemBuilder: (context, index) {
+                  if (index == 0) return _buildQuestionInput();
+                  return _buildQAItem(qaItems[index - 1]);
+                },
+              );
             },
           ),
         ),
@@ -310,7 +359,8 @@ class _EventQNAScreenState extends State<EventQNAScreen>
         children: [
           CircleAvatar(
             radius: 16,
-            backgroundColor: message.isOrganizer ? Colors.deepPurple : Colors.blue,
+            backgroundColor:
+                message.isOrganizer ? Colors.deepPurple : Colors.blue,
             child: Text(
               message.userName[0].toUpperCase(),
               style: const TextStyle(
@@ -332,13 +382,16 @@ class _EventQNAScreenState extends State<EventQNAScreen>
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: message.isOrganizer ? Colors.deepPurple : Colors.black,
+                        color: message.isOrganizer
+                            ? Colors.deepPurple
+                            : Colors.black,
                       ),
                     ),
                     if (message.isOrganizer) ...[
                       const SizedBox(width: 6),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
                           color: Colors.deepPurple,
                           borderRadius: BorderRadius.circular(8),
@@ -391,7 +444,8 @@ class _EventQNAScreenState extends State<EventQNAScreen>
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.help_outline, size: 20, color: Colors.deepPurple),
+              const Icon(Icons.help_outline,
+                  size: 20, color: Colors.deepPurple),
               const SizedBox(width: 8),
               Expanded(
                 child: Column(
@@ -435,7 +489,7 @@ class _EventQNAScreenState extends State<EventQNAScreen>
               ),
             ],
           ),
-          
+
           // Answer (if available)
           if (item.answer != null) ...[
             const SizedBox(height: 12),
@@ -451,7 +505,8 @@ class _EventQNAScreenState extends State<EventQNAScreen>
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.check_circle, size: 16, color: Colors.green),
+                      const Icon(Icons.check_circle,
+                          size: 16, color: Colors.green),
                       const SizedBox(width: 6),
                       Text(
                         'Answer by ${item.answeredBy}',
@@ -579,21 +634,23 @@ class _EventQNAScreenState extends State<EventQNAScreen>
     );
   }
 
-  void _sendMessage() {
+  void _sendMessage() async {
     if (_messageController.text.trim().isEmpty) return;
-
-    setState(() {
-      messages.add(ChatMessage(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        userName: 'You',
-        message: _messageController.text.trim(),
-        timestamp: DateTime.now(),
-        isOrganizer: false,
-      ));
+    final user = FirebaseAuth.instance.currentUser;
+    final userName = user?.displayName ?? user?.email ?? 'User';
+    await FirebaseFirestore.instance
+        .collection('events')
+        .doc(widget.eventId)
+        .collection('chat_messages')
+        .add({
+      'userName': userName,
+      'message': _messageController.text.trim(),
+      'timestamp': FieldValue.serverTimestamp(),
+      'isOrganizer': false,
+      'userId': user?.uid,
     });
-
     _messageController.clear();
-    
+
     // Auto-scroll to bottom
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_chatScrollController.hasClients) {
@@ -606,21 +663,22 @@ class _EventQNAScreenState extends State<EventQNAScreen>
     });
   }
 
-  void _submitQuestion() {
+  void _submitQuestion() async {
     if (_questionController.text.trim().isEmpty) return;
-
-    setState(() {
-      qaItems.insert(0, QAItem(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        question: _questionController.text.trim(),
-        askedBy: 'You',
-        askedAt: DateTime.now(),
-        upvotes: 0,
-      ));
+    final user = FirebaseAuth.instance.currentUser;
+    final userName = user?.displayName ?? user?.email ?? 'User';
+    await FirebaseFirestore.instance
+        .collection('events')
+        .doc(widget.eventId)
+        .collection('qa_items')
+        .add({
+      'question': _questionController.text.trim(),
+      'askedBy': userName,
+      'askedAt': FieldValue.serverTimestamp(),
+      'upvotes': 0,
+      'userId': user?.uid,
     });
-
     _questionController.clear();
-    
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Question submitted! The organizer will answer soon.'),
@@ -629,15 +687,13 @@ class _EventQNAScreenState extends State<EventQNAScreen>
     );
   }
 
-  void _upvoteQuestion(String questionId) {
-    setState(() {
-      final index = qaItems.indexWhere((item) => item.id == questionId);
-      if (index != -1) {
-        qaItems[index] = qaItems[index].copyWith(
-          upvotes: qaItems[index].upvotes + 1,
-        );
-      }
-    });
+  void _upvoteQuestion(String questionId) async {
+    final ref = FirebaseFirestore.instance
+        .collection('events')
+        .doc(widget.eventId)
+        .collection('qa_items')
+        .doc(questionId);
+    await ref.update({'upvotes': FieldValue.increment(1)});
   }
 
   void _showEventInfo() {

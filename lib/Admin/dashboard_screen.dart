@@ -96,7 +96,7 @@ class AdminDashboardScreen extends StatelessWidget {
       _DashboardItem("Report/Block", Icons.report, const ReportBlockScreen()),
       _DashboardItem("User Management", Icons.supervisor_account,
           const UserManagementScreen()),
-      _DashboardItem("Comments", Icons.comment, const CommentsPage()),
+      //_DashboardItem("Comments", Icons.comment, const CommentsPage()),
       _DashboardItem(
   "Analytics",
   Icons.analytics,

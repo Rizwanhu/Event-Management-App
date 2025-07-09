@@ -3,14 +3,14 @@ import '../models/qa_item.dart';
 import '../widgets/qa_item_widget.dart';
 
 class QATab extends StatelessWidget {
-  final List<QAItem> qaItems;
+  final Stream<List<QAItem>> qaStream;
+  final Function(String) onUpvoteQuestion;
   final TextEditingController questionController;
   final VoidCallback onSubmitQuestion;
-  final Function(String) onUpvoteQuestion;
 
   const QATab({
     super.key,
-    required this.qaItems,
+    required this.qaStream,
     required this.questionController,
     required this.onSubmitQuestion,
     required this.onUpvoteQuestion,
@@ -46,19 +46,25 @@ class QATab extends StatelessWidget {
             ],
           ),
         ),
-        
+
         // Q&A List
         Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: qaItems.length + 1, // +1 for the question input
-            itemBuilder: (context, index) {
-              if (index == 0) {
-                return _buildQuestionInput();
-              }
-              return QAItemWidget(
-                item: qaItems[index - 1],
-                onUpvote: onUpvoteQuestion,
+          child: StreamBuilder<List<QAItem>>(
+            stream: qaStream,
+            builder: (context, snapshot) {
+              final qaItems = snapshot.data ?? [];
+              return ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: qaItems.length + 1, // +1 for the question input
+                itemBuilder: (context, index) {
+                  if (index == 0) {
+                    return _buildQuestionInput();
+                  }
+                  return QAItemWidget(
+                    item: qaItems[index - 1],
+                    onUpvote: onUpvoteQuestion,
+                  );
+                },
               );
             },
           ),

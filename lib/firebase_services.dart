@@ -8,8 +8,8 @@ class FirebaseServices {
 
   // Sign up with email and password
   Future<User?> signUp(
-    String email, 
-    String password, 
+    String email,
+    String password,
     String name,
     String role, // 'user', 'organizer', or 'admin'
     BuildContext context,
@@ -33,12 +33,21 @@ class FirebaseServices {
           collectionName = 'Users';
       }
 
-      await _firestore.collection(collectionName).doc(credential.user!.uid).set({
+      // Add 'approved: false' for organizers
+      final userData = {
         'email': email,
         'name': name,
         'role': role,
         'createdAt': FieldValue.serverTimestamp(),
-      });
+      };
+      if (role == 'organizer') {
+        userData['approved'] = false;
+      }
+
+      await _firestore
+          .collection(collectionName)
+          .doc(credential.user!.uid)
+          .set(userData);
 
       return credential.user;
     } on FirebaseAuthException catch (e) {
@@ -73,7 +82,7 @@ class FirebaseServices {
       } else if (e.code == 'invalid-email') {
         errorMessage = 'The email address is not valid.';
       }
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(errorMessage)),
       );
@@ -97,7 +106,7 @@ class FirebaseServices {
   }
 
   // Event Moderation Functions
-  
+
   /// Get all pending events for admin moderation from approval collection
   Stream<List<Map<String, dynamic>>> getPendingEvents() {
     return _firestore
@@ -118,12 +127,14 @@ class FirebaseServices {
   Future<void> approveEvent(String approvalId) async {
     try {
       // Get approval document
-      DocumentSnapshot approvalDoc = await _firestore.collection('event_approvals').doc(approvalId).get();
+      DocumentSnapshot approvalDoc =
+          await _firestore.collection('event_approvals').doc(approvalId).get();
       if (!approvalDoc.exists) {
         throw Exception('Approval record not found');
       }
 
-      Map<String, dynamic> approvalData = approvalDoc.data() as Map<String, dynamic>;
+      Map<String, dynamic> approvalData =
+          approvalDoc.data() as Map<String, dynamic>;
       String eventId = approvalData['eventId'];
 
       // Update event status to approved
@@ -139,7 +150,7 @@ class FirebaseServices {
         'approvedAt': FieldValue.serverTimestamp(),
         'approvedBy': _auth.currentUser?.uid,
       });
-        
+
       // Send notification to organizer
       await _sendNotificationToOrganizer(
         approvalData['organizerId'],
@@ -157,12 +168,14 @@ class FirebaseServices {
   Future<void> rejectEvent(String approvalId, String reason) async {
     try {
       // Get approval document
-      DocumentSnapshot approvalDoc = await _firestore.collection('event_approvals').doc(approvalId).get();
+      DocumentSnapshot approvalDoc =
+          await _firestore.collection('event_approvals').doc(approvalId).get();
       if (!approvalDoc.exists) {
         throw Exception('Approval record not found');
       }
 
-      Map<String, dynamic> approvalData = approvalDoc.data() as Map<String, dynamic>;
+      Map<String, dynamic> approvalData =
+          approvalDoc.data() as Map<String, dynamic>;
       String eventId = approvalData['eventId'];
 
       // Update event status to rejected
@@ -180,14 +193,18 @@ class FirebaseServices {
         'rejectedBy': _auth.currentUser?.uid,
         'rejectionReason': reason,
       });
-        
+
       // Send notification to organizer
       await _sendNotificationToOrganizer(
         approvalData['organizerId'],
         'Event Rejected',
         'Your event "${approvalData['title']}" was rejected. Reason: $reason',
         'event_rejected',
-        {'eventId': eventId, 'eventTitle': approvalData['title'], 'reason': reason},
+        {
+          'eventId': eventId,
+          'eventTitle': approvalData['title'],
+          'reason': reason
+        },
       );
     } catch (e) {
       throw Exception('Failed to reject event: $e');
@@ -211,12 +228,11 @@ class FirebaseServices {
   }
 
   /// Send notification to admin when new event is submitted
-  Future<void> notifyAdminOfNewEvent(String eventId, String eventTitle, String organizerName) async {
+  Future<void> notifyAdminOfNewEvent(
+      String eventId, String eventTitle, String organizerName) async {
     try {
       // Get all admin users (remove isActive filter for now)
-      QuerySnapshot adminSnapshot = await _firestore
-          .collection('admins')
-          .get();
+      QuerySnapshot adminSnapshot = await _firestore.collection('admins').get();
 
       // Send notification to each admin
       for (DocumentSnapshot adminDoc in adminSnapshot.docs) {
@@ -225,7 +241,11 @@ class FirebaseServices {
           'New Event Pending Approval',
           'A new event "$eventTitle" by $organizerName is waiting for your review.',
           'event_pending_review',
-          {'eventId': eventId, 'eventTitle': eventTitle, 'organizerName': organizerName},
+          {
+            'eventId': eventId,
+            'eventTitle': eventTitle,
+            'organizerName': organizerName
+          },
         );
       }
     } catch (e) {
@@ -335,5 +355,38 @@ class FirebaseServices {
     } catch (e) {
       print('Error marking all notifications as read: $e');
     }
+  }
+
+  /// Approve an organizer (admin action)
+  Future<void> approveOrganizer(String organizerId) async {
+    try {
+      await _firestore.collection('Event-managers').doc(organizerId).update({
+        'approved': true,
+        'approvedAt': FieldValue.serverTimestamp(),
+        'approvedBy': _auth.currentUser?.uid,
+      });
+      // Optionally notify organizer
+      await _sendNotificationToOrganizer(
+        organizerId,
+        'Organizer Approved',
+        'Your account has been approved by the admin. You can now create events.',
+        'organizer_approved',
+        {},
+      );
+    } catch (e) {
+      print('Error approving organizer: $e');
+      throw Exception('Failed to approve organizer');
+    }
+  }
+
+  /// Check if current organizer is approved
+  Future<bool> isCurrentOrganizerApproved() async {
+    final user = _auth.currentUser;
+    if (user == null) return false;
+    final doc =
+        await _firestore.collection('Event-managers').doc(user.uid).get();
+    if (!doc.exists) return false;
+    final data = doc.data() as Map<String, dynamic>;
+    return data['approved'] == true;
   }
 }
