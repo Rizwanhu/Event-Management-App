@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'organizer_event_comments_screen.dart';
 import 'create_edit_event_screen.dart';
 import 'organizer_settings_screen.dart';
 import 'notifications_screen.dart';
 import 'pending_events_screen.dart';
+import 'organizer_event_chat_screen.dart';
+import 'organizer_event_qna_screen.dart';
 import '../Firebase/event_management_service.dart';
 import '../Firebase/notification_service.dart';
 import '../Models/event_model.dart';
@@ -51,9 +54,9 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
     try {
       // First check if user is authenticated
       if (!mounted) return;
-      
+
       print('Starting to load events...');
-      
+
       // Try to use the one-time fetch first as it's more reliable
       try {
         final eventList = await _eventService.getOrganizerEventsOnce();
@@ -63,48 +66,50 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
             events = eventList;
           });
         }
-        
+
         // After successful one-time fetch, set up the stream for real-time updates
-        _eventService.getOrganizerEvents()
-          .timeout(const Duration(seconds: 10))
-          .listen(
-            (eventList) {
-              if (mounted) {
-                print('Stream update: ${eventList.length} events');
-                setState(() {
-                  events = eventList;
-                });
-              }
-            },
-            onError: (error) {
-              print('Stream error (non-fatal): $error');
-              // Don't show error for stream failures after initial load
-            },
-          );
+        _eventService
+            .getOrganizerEvents()
+            .timeout(const Duration(seconds: 10))
+            .listen(
+          (eventList) {
+            if (mounted) {
+              print('Stream update: ${eventList.length} events');
+              setState(() {
+                events = eventList;
+              });
+            }
+          },
+          onError: (error) {
+            print('Stream error (non-fatal): $error');
+            // Don't show error for stream failures after initial load
+          },
+        );
       } catch (e) {
         print('One-time fetch failed, trying stream only: $e');
-        
+
         // Fallback to stream only
-        _eventService.getOrganizerEvents()
-          .timeout(const Duration(seconds: 15))
-          .listen(
-            (eventList) {
-              if (mounted) {
-                print('Received ${eventList.length} events via stream');
-                setState(() {
-                  events = eventList;
-                });
-              }
-            },
-            onError: (error) {
-              print('Error loading events: $error');
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Failed to load events: $error')),
-                );
-              }
-            },
-          );
+        _eventService
+            .getOrganizerEvents()
+            .timeout(const Duration(seconds: 15))
+            .listen(
+          (eventList) {
+            if (mounted) {
+              print('Received ${eventList.length} events via stream');
+              setState(() {
+                events = eventList;
+              });
+            }
+          },
+          onError: (error) {
+            print('Error loading events: $error');
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Failed to load events: $error')),
+              );
+            }
+          },
+        );
       }
     } catch (e) {
       print('Exception in _loadEvents: $e');
@@ -224,7 +229,7 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
               ],
             ),
           ),
-          
+
           // Tab Content
           Expanded(
             child: TabBarView(
@@ -253,7 +258,8 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
   Widget _buildOverviewTab() {
     int totalEvents = _statistics['totalEvents'] ?? events.length;
     int totalTicketsSold = _statistics['totalAttendees'] ?? 0;
-    int upcomingEvents = events.where((e) => e.eventDate.isAfter(DateTime.now())).length;
+    int upcomingEvents =
+        events.where((e) => e.eventDate.isAfter(DateTime.now())).length;
     double totalRevenue = _statistics['totalRevenue'] ?? 0.0;
 
     return SingleChildScrollView(
@@ -315,16 +321,16 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
               ],
             ),
           ),
-          
+
           const SizedBox(height: 20),
-          
+
           // Stats Grid - Responsive
           LayoutBuilder(
             builder: (context, constraints) {
               double screenWidth = constraints.maxWidth;
               int crossAxisCount = screenWidth > 600 ? 4 : 2;
               double childAspectRatio = screenWidth > 600 ? 1.3 : 1.4;
-              
+
               return GridView.count(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -361,14 +367,14 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
               );
             },
           ),
-          
+
           const SizedBox(height: 20),
-          
+
           // Pending Events Summary Box
           _buildPendingEventsBox(),
-          
+
           const SizedBox(height: 20),
-          
+
           // Recent Events
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -388,12 +394,14 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
               ),
             ],
           ),
-          
+
           const SizedBox(height: 12),
-          
+
           // Recent Events List with proper constraints
-          ...events.take(3).map((event) => _buildEventCard(event, isCompact: true)),
-          
+          ...events
+              .take(3)
+              .map((event) => _buildEventCard(event, isCompact: true)),
+
           // Add bottom padding to prevent overflow
           const SizedBox(height: 80),
         ],
@@ -421,9 +429,11 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                         prefixIcon: const Icon(Icons.search, size: 20),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: _colorScheme.onSurface.withOpacity(0.3)),
+                          borderSide: BorderSide(
+                              color: _colorScheme.onSurface.withOpacity(0.3)),
                         ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
                         isDense: true,
                       ),
                     ),
@@ -434,7 +444,8 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                     child: Container(
                       height: 40,
                       decoration: BoxDecoration(
-                        border: Border.all(color: _colorScheme.onSurface.withOpacity(0.3)),
+                        border: Border.all(
+                            color: _colorScheme.onSurface.withOpacity(0.3)),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Center(
@@ -447,7 +458,7 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
             ],
           ),
         ),
-        
+
         // Events List
         Expanded(
           child: ListView.builder(
@@ -461,6 +472,7 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
       ],
     );
   }
+
   void _editEvent(EventModel event) {
     Navigator.push(
       context,
@@ -513,7 +525,7 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                   ),
                 ),
                 const SizedBox(height: 16),
-                
+
                 // Chart container with constraints
                 SizedBox(
                   height: 180,
@@ -522,9 +534,9 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                     painter: LineChartPainter(),
                   ),
                 ),
-                
+
                 const SizedBox(height: 12),
-                
+
                 // Legend - Mobile responsive
                 Wrap(
                   alignment: WrapAlignment.center,
@@ -537,9 +549,9 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
               ],
             ),
           ),
-          
+
           const SizedBox(height: 20),
-          
+
           // Performance Metrics - Responsive Grid
           LayoutBuilder(
             builder: (context, constraints) {
@@ -594,19 +606,23 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
               } else {
                 return Column(
                   children: [
-                    _buildMetricCard('Conversion Rate', '24.5%', '+2.1%', _colorScheme.primary),
+                    _buildMetricCard('Conversion Rate', '24.5%', '+2.1%',
+                        _colorScheme.primary),
                     const SizedBox(height: 12),
-                    _buildMetricCard('Avg. Rating', '4.2', '+0.3', _colorScheme.secondary),
+                    _buildMetricCard(
+                        'Avg. Rating', '4.2', '+0.3', _colorScheme.secondary),
                     const SizedBox(height: 12),
-                    _buildMetricCard('Total Views', '12.4K', '+15%', _colorScheme.surface),
+                    _buildMetricCard(
+                        'Total Views', '12.4K', '+15%', _colorScheme.surface),
                     const SizedBox(height: 12),
-                    _buildMetricCard('Engagement', '8.7%', '+1.2%', _colorScheme.primary),
+                    _buildMetricCard(
+                        'Engagement', '8.7%', '+1.2%', _colorScheme.primary),
                   ],
                 );
               }
             },
           ),
-          
+
           // Add bottom padding
           const SizedBox(height: 80),
         ],
@@ -635,7 +651,8 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.emoji_events, color: Colors.white, size: 24),
+                    const Icon(Icons.emoji_events,
+                        color: Colors.white, size: 24),
                     const SizedBox(width: 8),
                     const Expanded(
                       child: Text(
@@ -650,7 +667,7 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                   ],
                 ),
                 const SizedBox(height: 12),
-                
+
                 // Event details
                 const Text(
                   'Summer Music Festival 2024',
@@ -671,9 +688,9 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
               ],
             ),
           ),
-          
+
           const SizedBox(height: 20),
-          
+
           // Recent Reviews
           const Text(
             'Recent Reviews',
@@ -682,14 +699,14 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
               fontWeight: FontWeight.bold,
             ),
           ),
-          
+
           const SizedBox(height: 12),
-          
+
           // Reviews with proper constraints
           ...List.generate(3, (index) => _buildReviewCard(index)),
-          
+
           const SizedBox(height: 20),
-          
+
           // Quick Actions
           const Text(
             'Quick Actions',
@@ -698,16 +715,16 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
               fontWeight: FontWeight.bold,
             ),
           ),
-          
+
           const SizedBox(height: 12),
-          
+
           // Quick Actions Grid - Responsive
           LayoutBuilder(
             builder: (context, constraints) {
               double screenWidth = constraints.maxWidth;
               int crossAxisCount = screenWidth > 600 ? 4 : 2;
               double childAspectRatio = screenWidth > 600 ? 1.6 : 1.8;
-              
+
               return GridView.count(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -744,7 +761,7 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
               );
             },
           ),
-          
+
           // Add bottom padding to prevent FAB overlap
           const SizedBox(height: 80),
         ],
@@ -752,7 +769,8 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+      String title, String value, IconData icon, Color color) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -864,7 +882,8 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                       errorBuilder: (context, error, stackTrace) {
                         return Container(
                           color: Colors.grey.shade200,
-                          child: const Icon(Icons.image_not_supported, color: Colors.grey),
+                          child: const Icon(Icons.image_not_supported,
+                              color: Colors.grey),
                         );
                       },
                     ),
@@ -897,10 +916,9 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
               _buildStatusBadge(event.status),
             ],
           ),
-          
           if (!isCompact) ...[
             const SizedBox(height: 12),
-            
+
             // Event Stats - Mobile responsive layout
             LayoutBuilder(
               builder: (context, constraints) {
@@ -911,7 +929,9 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                         child: _buildEventStat(
                           'Attendees',
                           '${event.currentAttendees}/${event.maxAttendees ?? 'Unlimited'}',
-                          event.maxAttendees != null ? event.currentAttendees / event.maxAttendees! : 0.0,
+                          event.maxAttendees != null
+                              ? event.currentAttendees / event.maxAttendees!
+                              : 0.0,
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -930,7 +950,9 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                       _buildEventStat(
                         'Attendees',
                         '${event.currentAttendees}/${event.maxAttendees ?? 'Unlimited'}',
-                        event.maxAttendees != null ? event.currentAttendees / event.maxAttendees! : 0.0,
+                        event.maxAttendees != null
+                            ? event.currentAttendees / event.maxAttendees!
+                            : 0.0,
                       ),
                       const SizedBox(height: 12),
                       _buildEventStat(
@@ -943,23 +965,27 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                 }
               },
             ),
-            
+
             const SizedBox(height: 12),
-            
+
             // Event Info - Wrap for mobile
             Wrap(
               spacing: 12,
               runSpacing: 6,
               children: [
-                _buildSocialStat(Icons.people, event.currentAttendees.toString(), _colorScheme.primary),
-                _buildSocialStat(Icons.category, event.category, _colorScheme.secondary),
-                _buildSocialStat(Icons.schedule, _formatEventTime(event), _colorScheme.surface),
-                _buildSocialStat(Icons.location_on, event.location.split(',').first, _colorScheme.primary),
+                _buildSocialStat(Icons.people,
+                    event.currentAttendees.toString(), _colorScheme.primary),
+                _buildSocialStat(
+                    Icons.category, event.category, _colorScheme.secondary),
+                _buildSocialStat(Icons.schedule, _formatEventTime(event),
+                    _colorScheme.surface),
+                _buildSocialStat(Icons.location_on,
+                    event.location.split(',').first, _colorScheme.primary),
               ],
             ),
-            
+
             const SizedBox(height: 12),
-            
+
             // Action Buttons - Responsive
             LayoutBuilder(
               builder: (context, constraints) {
@@ -970,7 +996,8 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                         child: OutlinedButton.icon(
                           onPressed: () => _showBoostEventDialog(),
                           icon: const Icon(Icons.trending_up, size: 16),
-                          label: const Text('Boost', style: TextStyle(fontSize: 13)),
+                          label: const Text('Boost',
+                              style: TextStyle(fontSize: 13)),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: _colorScheme.primary,
                             side: BorderSide(color: _colorScheme.primary),
@@ -983,9 +1010,58 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                         child: ElevatedButton.icon(
                           onPressed: () => _editEvent(event),
                           icon: const Icon(Icons.edit, size: 16),
-                          label: const Text('Edit', style: TextStyle(fontSize: 13)),
+                          label: const Text('Edit',
+                              style: TextStyle(fontSize: 13)),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: _colorScheme.primary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => OrganizerEventChatScreen(
+                                  eventId: event.id,
+                                  eventTitle: event.title,
+                                ),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.chat, size: 16),
+                          label: const Text('View Chat',
+                              style: TextStyle(fontSize: 13)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.deepPurple,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => OrganizerEventQNAScreen(
+                                  eventId: event.id,
+                                  eventTitle: event.title,
+                                ),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.question_answer, size: 16),
+                          label: const Text('View Q&A',
+                              style: TextStyle(fontSize: 13)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.orange,
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 8),
                           ),
@@ -1021,6 +1097,76 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                           ),
                         ),
                       ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => OrganizerEventChatScreen(
+                                  eventId: event.id,
+                                  eventTitle: event.title,
+                                ),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.chat, size: 16),
+                          label: const Text('View Chat'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.deepPurple,
+                            foregroundColor: Colors.white,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => OrganizerEventQNAScreen(
+                                  eventId: event.id,
+                                  eventTitle: event.title,
+                                ),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.question_answer, size: 16),
+                          label: const Text('View Q&A'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.orange,
+                            foregroundColor: Colors.white,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    OrganizerEventCommentsScreen(
+                                  eventId: event.id,
+                                  eventTitle: event.title,
+                                ),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.reviews, size: 16),
+                          label: const Text('View Comments/Reviews'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.teal,
+                            foregroundColor: Colors.white,
+                          ),
+                        ),
+                      ),
                     ],
                   );
                 }
@@ -1032,7 +1178,8 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
     );
   }
 
-  Widget _buildMetricCard(String title, String value, String change, Color color) {
+  Widget _buildMetricCard(
+      String title, String value, String change, Color color) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -1207,7 +1354,8 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
     );
   }
 
-  Widget _buildActionCard(String title, IconData icon, Color color, VoidCallback onTap) {
+  Widget _buildActionCard(
+      String title, IconData icon, Color color, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -1239,6 +1387,7 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
       ),
     );
   }
+
   void _showCreateEventDialog() {
     Navigator.push(
       context,
@@ -1406,9 +1555,10 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
   }
 
   Widget _buildPendingEventsBox() {
-    final pendingEvents = events.where((event) => event.status == EventStatus.pending).toList();
+    final pendingEvents =
+        events.where((event) => event.status == EventStatus.pending).toList();
     final pendingCount = pendingEvents.length;
-    
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -1468,7 +1618,8 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: Colors.orange.shade700,
                   borderRadius: BorderRadius.circular(12),
@@ -1484,7 +1635,6 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
               ),
             ],
           ),
-          
           if (pendingCount > 0) ...[
             const SizedBox(height: 12),
             Container(
@@ -1517,13 +1667,13 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
               ),
             ),
           ],
-          
           if (pendingCount > 0) ...[
             const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton(
-                onPressed: () => _tabController.animateTo(2), // Navigate to My Events tab
+                onPressed: () =>
+                    _tabController.animateTo(2), // Navigate to My Events tab
                 style: OutlinedButton.styleFrom(
                   side: BorderSide(color: Colors.orange.shade700),
                   foregroundColor: Colors.orange.shade700,
@@ -1573,7 +1723,7 @@ class LineChartPainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
 
     final path = Path();
-    
+
     // Mock data points for revenue chart
     final points = [
       Offset(0, size.height * 0.8),

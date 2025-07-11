@@ -1,7 +1,7 @@
 buildscript {
     dependencies {
         classpath("com.google.gms:google-services:4.4.1")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.22") // ✅ Match Kotlin version with existing plugins
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.22")
     }
 
     repositories {
@@ -17,11 +17,12 @@ allprojects {
     }
 }
 
-val newBuildDir: Directory = rootProject.layout.buildDirectory.dir("../../build").get()
+// Optional: unify build folder location
+val newBuildDir = rootProject.layout.buildDirectory.dir("../../build").get()
 rootProject.layout.buildDirectory.value(newBuildDir)
 
 subprojects {
-    val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
+    val newSubprojectBuildDir = newBuildDir.dir(project.name)
     project.layout.buildDirectory.value(newSubprojectBuildDir)
 }
 

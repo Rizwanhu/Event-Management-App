@@ -1,7 +1,7 @@
 plugins {
     id("com.android.application")
     id("com.google.gms.google-services")
-    id("kotlin-android")
+    id("kotlin-android") // no version here
     id("dev.flutter.flutter-gradle-plugin")
 }
 
@@ -42,6 +42,6 @@ flutter {
 }
 
 dependencies {
-    implementation("com.google.firebase:firebase-analytics:21.6.1") // ✅ Compatible with Kotlin 1.8.22
+    implementation("com.google.firebase:firebase-analytics")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 }
