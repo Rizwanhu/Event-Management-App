@@ -90,7 +90,7 @@ class NotificationModel {
 
   static NotificationType _parseNotificationType(dynamic type) {
     if (type == null) return NotificationType.systemAlert;
-    
+
     switch (type.toString().toLowerCase()) {
       case 'eventcreated':
         return NotificationType.eventCreated;
@@ -114,6 +114,100 @@ class NotificationModel {
 }
 
 class NotificationService {
+  /// Send notification to all users when a new event is approved
+  Future<void> sendNewEventNotificationToAllUsers({
+    required String eventId,
+    required String eventName,
+    required String organizerName,
+  }) async {
+    try {
+      final usersSnapshot = await _firestore.collection('users').get();
+      final batch = _firestore.batch();
+      final now = DateTime.now();
+
+      for (var userDoc in usersSnapshot.docs) {
+        final notificationRef = _notificationsCollection.doc();
+        batch.set(notificationRef, {
+          'userId': userDoc.id,
+          'title': 'New Event: $eventName',
+          'message':
+              'A new event "$eventName" has been created by $organizerName.',
+          'eventId': eventId,
+          'eventName': eventName,
+          'organizerName': organizerName,
+          'createdAt': Timestamp.fromDate(now),
+          'isRead': false,
+          'type': 'eventCreated',
+        });
+      }
+      await batch.commit();
+      print('New event notifications sent to all users');
+    } catch (e) {
+      print('Error sending new event notifications to users: $e');
+    }
+  }
+
+  /// Send notification to admin (for new event creation, etc.)
+  Future<void> sendAdminNotification({
+    required String title,
+    required String message,
+    required NotificationType type,
+    Map<String, dynamic>? data,
+  }) async {
+    try {
+      final notification = NotificationModel(
+        id: '',
+        userId: '', // Not needed for admin
+        title: title,
+        message: message,
+        type: type,
+        data: data ?? {},
+        isRead: false,
+        createdAt: DateTime.now(),
+      );
+      final map = notification.toMap();
+      map['targetRole'] = 'admin';
+      print('sendAdminNotification: Writing to Firestore:');
+      print(map);
+      await _notificationsCollection.add(map);
+      print('Admin notification sent');
+    } catch (e) {
+      print('Error sending admin notification: $e');
+    }
+  }
+
+  /// Send event rejection notification to organizer
+  Future<void> sendEventRejectionNotification({
+    required String organizerId,
+    required String eventId,
+    required String eventTitle,
+    String? reason,
+  }) async {
+    final docRef = _notificationsCollection.doc();
+    final notification = NotificationModel(
+      id: docRef.id,
+      userId: organizerId,
+      title: 'Event Rejected',
+      message: 'Your event "$eventTitle" was rejected. Reason: ${reason ?? ''}',
+      type: NotificationType.eventCancelled,
+      data: {
+        'eventId': eventId,
+        'eventTitle': eventTitle,
+        'reason': reason,
+      },
+      isRead: false,
+      createdAt: DateTime.now(),
+    );
+    print('sendEventRejectionNotification: Writing to Firestore:');
+    print(notification.toMap());
+    try {
+      await docRef.set(notification.toMap());
+      print('Event rejection notification sent to organizer: $organizerId');
+    } catch (e) {
+      print('Error sending event rejection notification: $e');
+    }
+  }
+
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
   NotificationService._internal();
@@ -121,7 +215,7 @@ class NotificationService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseMessaging _fcm = FirebaseMessaging.instance;
-  late final FlutterLocalNotificationsPlugin _localNotifications;
+  FlutterLocalNotificationsPlugin? _localNotifications;
 
   Future<void> initialize() async {
     // Initialize local notifications
@@ -130,7 +224,7 @@ class NotificationService {
     const InitializationSettings initializationSettings =
         InitializationSettings(android: initializationSettingsAndroid);
     _localNotifications = FlutterLocalNotificationsPlugin();
-    await _localNotifications.initialize(initializationSettings);
+    await _localNotifications!.initialize(initializationSettings);
 
     // Request notification permissions
     await _fcm.requestPermission(
@@ -147,7 +241,7 @@ class NotificationService {
     FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
 
     // Handle background/terminated messages
-    FirebaseMessaging.onBackgroundMessage(_handleBackgroundMessage);
+    // Removed FirebaseMessaging.onBackgroundMessage(_handleBackgroundMessage) as requested.
   }
 
   Future<void> _handleForegroundMessage(RemoteMessage message) async {
@@ -159,6 +253,7 @@ class NotificationService {
         AndroidNotificationDetails(
       'event_channel',
       'Event Notifications',
+      channelDescription: 'Notifications for event updates and alerts',
       importance: Importance.max,
       priority: Priority.high,
       showWhen: true,
@@ -167,13 +262,25 @@ class NotificationService {
     const NotificationDetails platformChannelSpecifics =
         NotificationDetails(android: androidPlatformChannelSpecifics);
 
-    await _localNotifications.show(
-      0,
-      message.notification?.title,
-      message.notification?.body,
-      platformChannelSpecifics,
-      payload: message.data.toString(),
-    );
+    if (_localNotifications == null) {
+      print('Error: _localNotifications is not initialized.');
+      return;
+    }
+    final title = message.notification?.title;
+    final body = message.notification?.body;
+    print(
+        'DEBUG: Showing notification. title: $title, body: $body, platformChannelSpecifics: $platformChannelSpecifics');
+    try {
+      await _localNotifications!.show(
+        0,
+        title ?? 'Notification',
+        body ?? '',
+        platformChannelSpecifics,
+        payload: message.data.toString(),
+      );
+    } catch (e, stack) {
+      print('Error in _showLocalNotification: $e\n$stack');
+    }
   }
 
   Future<void> _handleBackgroundMessage(RemoteMessage message) async {
@@ -189,23 +296,32 @@ class NotificationService {
     }
   }
 
-  CollectionReference get _notificationsCollection => _firestore.collection('notifications');
+  CollectionReference get _notificationsCollection =>
+      _firestore.collection('notifications');
 
   /// Get notifications for current user
   Stream<List<NotificationModel>> getNotifications() {
     final currentUser = _auth.currentUser;
     if (currentUser == null) {
+      // Return an empty stream if user is not logged in
+      return Stream.value([]);
+    }
+
+    // Defensive: check if currentUser.uid is not null
+    final userId = currentUser.uid;
+    if (userId.isEmpty) {
       return Stream.value([]);
     }
 
     return _notificationsCollection
-        .where('userId', isEqualTo: currentUser.uid)
+        .where('userId', isEqualTo: userId)
         .orderBy('createdAt', descending: true)
         .limit(50)
         .snapshots()
         .map((snapshot) {
       return snapshot.docs.map((doc) {
-        return NotificationModel.fromMap(doc.data() as Map<String, dynamic>, doc.id);
+        return NotificationModel.fromMap(
+            doc.data() as Map<String, dynamic>, doc.id);
       }).toList();
     });
   }
@@ -217,8 +333,13 @@ class NotificationService {
       return Stream.value(0);
     }
 
+    final userId = currentUser.uid;
+    if (userId.isEmpty) {
+      return Stream.value(0);
+    }
+
     return _notificationsCollection
-        .where('userId', isEqualTo: currentUser.uid)
+        .where('userId', isEqualTo: userId)
         .where('isRead', isEqualTo: false)
         .snapshots()
         .map((snapshot) => snapshot.docs.length);
@@ -227,6 +348,7 @@ class NotificationService {
   /// Mark notification as read
   Future<void> markAsRead(String notificationId) async {
     try {
+      print('markAsRead: Marking notification $notificationId as read');
       await _notificationsCollection.doc(notificationId).update({
         'isRead': true,
         'readAt': Timestamp.fromDate(DateTime.now()),
@@ -280,8 +402,14 @@ class NotificationService {
         isRead: false,
         createdAt: DateTime.now(),
       );
-
-      await _notificationsCollection.add(notification.toMap());
+      final map = notification.toMap();
+      // If this is for admin, allow passing targetRole
+      if (data != null && data['targetRole'] == 'admin') {
+        map['targetRole'] = 'admin';
+      }
+      print('sendNotification: Writing to Firestore:');
+      print(map);
+      await _notificationsCollection.add(map);
       print('Notification sent to user: $userId');
     } catch (e) {
       print('Error sending notification: $e');
@@ -336,7 +464,7 @@ class NotificationService {
     String? reason,
   }) async {
     final batch = _firestore.batch();
-    
+
     for (String attendeeId in attendeeIds) {
       final docRef = _notificationsCollection.doc();
       final notification = NotificationModel(
@@ -353,13 +481,14 @@ class NotificationService {
         isRead: false,
         createdAt: DateTime.now(),
       );
-      
+
       batch.set(docRef, notification.toMap());
     }
-    
+
     try {
       await batch.commit();
-      print('Event cancellation notifications sent to ${attendeeIds.length} attendees');
+      print(
+          'Event cancellation notifications sent to ${attendeeIds.length} attendees');
     } catch (e) {
       print('Error sending event cancellation notifications: $e');
     }
@@ -368,6 +497,7 @@ class NotificationService {
   /// Delete notification
   Future<void> deleteNotification(String notificationId) async {
     try {
+      print('deleteNotification: Deleting notification $notificationId');
       await _notificationsCollection.doc(notificationId).delete();
     } catch (e) {
       print('Error deleting notification: $e');

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../Firebase/auth_service.dart';
 import '../Models/user_model.dart';
+import 'user_notifications_screen.dart';
 
 class UserDashboard extends StatefulWidget {
   const UserDashboard({super.key});
@@ -65,6 +66,17 @@ class _UserDashboardState extends State<UserDashboard> {
         backgroundColor: Colors.deepPurple,
         foregroundColor: Colors.white,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => UserNotificationsScreen(),
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: _signOut,

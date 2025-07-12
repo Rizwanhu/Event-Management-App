@@ -1,6 +1,19 @@
+// Delete a notification by document ID
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+
+Future<void> deleteNotification(String notificationId) async {
+  try {
+    await FirebaseFirestore.instance
+        .collection('notifications')
+        .doc(notificationId)
+        .delete();
+  } catch (e) {
+    debugPrint('Error deleting notification: $e');
+    rethrow;
+  }
+}
 
 class FirebaseServices {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -292,18 +305,90 @@ class FirebaseServices {
     final currentUser = _auth.currentUser;
     if (currentUser == null) return Stream.value([]);
 
-    return _firestore
-        .collection('notifications')
-        .where('userId', isEqualTo: currentUser.uid)
-        .orderBy('createdAt', descending: true)
-        .limit(50)
-        .snapshots()
-        .map((snapshot) {
-      return snapshot.docs.map((doc) {
-        Map<String, dynamic> data = doc.data();
-        data['id'] = doc.id;
-        return data;
-      }).toList();
+    // Try to get user role from Firestore (admins, event_organizers, users)
+    Future<String?> getUserRole(String uid) async {
+      final adminDoc = await _firestore.collection('admins').doc(uid).get();
+      if (adminDoc.exists) return 'admin';
+      final orgDoc =
+          await _firestore.collection('event_organizers').doc(uid).get();
+      if (orgDoc.exists) return 'organizer';
+      final userDoc = await _firestore.collection('users').doc(uid).get();
+      if (userDoc.exists) return 'user';
+      return null;
+    }
+
+    // Use a stream that depends on the user's role
+    return Stream.fromFuture(getUserRole(currentUser.uid)).asyncExpand((role) {
+      if (role == 'admin') {
+        // Admin: show notifications for all admins (targetRole) and personal
+        final adminQuery = _firestore
+            .collection('notifications')
+            .where('targetRole', isEqualTo: 'admin')
+            .orderBy('createdAt', descending: true)
+            .limit(50)
+            .snapshots();
+        final userQuery = _firestore
+            .collection('notifications')
+            .where('userId', isEqualTo: currentUser.uid)
+            .orderBy('createdAt', descending: true)
+            .limit(50)
+            .snapshots();
+        return adminQuery.asyncMap((adminSnap) async {
+          final userSnap = await userQuery.first;
+          final allDocs = <String, Map<String, dynamic>>{};
+          for (var doc in adminSnap.docs) {
+            final data = doc.data();
+            data['id'] = doc.id;
+            allDocs[doc.id] = data;
+          }
+          for (var doc in userSnap.docs) {
+            final data = doc.data();
+            data['id'] = doc.id;
+            allDocs[doc.id] = data;
+          }
+          final docsList = allDocs.values.toList();
+          docsList.sort((a, b) {
+            final aTime = a['createdAt'] is Timestamp
+                ? a['createdAt'].millisecondsSinceEpoch
+                : 0;
+            final bTime = b['createdAt'] is Timestamp
+                ? b['createdAt'].millisecondsSinceEpoch
+                : 0;
+            return bTime.compareTo(aTime);
+          });
+          return docsList;
+        });
+      } else if (role == 'organizer') {
+        // Organizer: only personal notifications
+        return _firestore
+            .collection('notifications')
+            .where('userId', isEqualTo: currentUser.uid)
+            .orderBy('createdAt', descending: true)
+            .limit(50)
+            .snapshots()
+            .map((snapshot) {
+          return snapshot.docs.map((doc) {
+            final data = doc.data();
+            data['id'] = doc.id;
+            return data;
+          }).toList();
+        });
+      } else {
+        // Regular user: only personal notifications
+        return _firestore
+            .collection('notifications')
+            .where('userId', isEqualTo: currentUser.uid)
+            .orderBy('createdAt', descending: true)
+            .limit(50)
+            .snapshots()
+            .map((snapshot) {
+          return snapshot.docs.map((doc) {
+            final data = doc.data();
+            data['id'] = doc.id;
+            return data;
+          }).toList();
+        });
+      }
     });
   }
 

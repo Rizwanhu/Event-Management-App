@@ -314,12 +314,12 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
         ),
         const SizedBox(height: 16),
         SizedBox(
-          height: 300,
+          height: 350,
           child: flutter_map.FlutterMap(
             options: flutter_map.MapOptions(
               center:
                   _selectedLocation ?? const latlong2.LatLng(31.5204, 74.3587),
-              zoom: 13.0,
+              zoom: 18.0,
               onTap: (tapPosition, point) {
                 setState(() {
                   _selectedLocation = point;
@@ -329,19 +329,20 @@ class _CreateEditEventScreenState extends State<CreateEditEventScreen> {
             ),
             children: [
               flutter_map.TileLayer(
-                urlTemplate:
-                    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
                 subdomains: const ['a', 'b', 'c'],
+
+                // Removed subdomains to avoid URI issues
               ),
               if (_selectedLocation != null)
-                flutter_map.MarkerLayer(
-                  markers: [
-                    flutter_map.Marker(
-                      point: _selectedLocation!,
-                      builder: (ctx) => const Icon(
-                        Icons.location_pin,
-                        color: Colors.red,
-                        size: 40,
+                    flutter_map.MarkerLayer(
+                      markers: [
+                        flutter_map.Marker(
+                          point: _selectedLocation!,
+                          builder: (ctx) => const Icon(
+                            Icons.location_pin,
+                            color: Colors.red,
+                            size: 40,
                       ),
                     ),
                   ],

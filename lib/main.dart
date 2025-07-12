@@ -11,23 +11,30 @@ import 'Firebase/user_data_service.dart';
 import 'Firebase/notification_service.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized(); // required before Firebase init
-  
-  // Disable debug prints in release mode to avoid debugger pauses
-  if (kReleaseMode) {
-    debugPrint = (String? message, {int? wrapWidth}) {};
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Only initialize Firebase once
+  if (Firebase.apps.isEmpty) {
+    try {
+      print("✅ Initializing Firebase...");
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    } on FirebaseException catch (e) {
+      if (e.code == 'duplicate-app') {
+        print('⚠️ Firebase already initialized');
+      } else {
+        rethrow;
+      }
+    }
+  } else {
+    print("⚠️ Firebase already initialized (skipped)");
   }
-  
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  
-  // Initialize notification service
+
+  // Initialize services
   await NotificationService().initialize();
-  
-  // Preload user data for faster profile loading
   UserDataService().preloadUserData();
-  
+
   runApp(const MyApp());
 }
 
@@ -53,7 +60,6 @@ class MyApp extends StatelessWidget {
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
-
   final String title;
 
   @override
@@ -64,8 +70,7 @@ class _MyHomePageState extends State<MyHomePage> {
   int _selectedIndex = 0;
 
   final List<Widget> _pages = [
-    const SearchScreen(), // Direct search screen as home page
-    // const EventDetailPage(),
+    const SearchScreen(),
     const PromoteEventPage(),
     const ProfileScreen(),
   ];
@@ -87,10 +92,6 @@ class _MyHomePageState extends State<MyHomePage> {
             icon: Icon(Icons.home),
             label: 'Home',
           ),
-          // BottomNavigationBarItem(
-          //   icon: Icon(Icons.event),
-          //   label: 'Event',
-          // ),
           BottomNavigationBarItem(
             icon: Icon(Icons.trending_up),
             label: 'Promote',

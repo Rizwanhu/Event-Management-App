@@ -4,16 +4,6 @@ import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
 
-/// Default [FirebaseOptions] for use with your Firebase apps.
-///
-/// Example:
-/// ```dart
-/// import 'firebase_options.dart';
-/// // ...
-/// await Firebase.initializeApp(
-///   options: DefaultFirebaseOptions.currentPlatform,
-/// );
-/// ```
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
@@ -46,7 +36,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '864979396886',
     projectId: 'event-management-53181',
     authDomain: 'event-management-53181.firebaseapp.com',
-    storageBucket: 'event-management-53181.firebasestorage.app',
+    storageBucket: 'event-management-53181.appspot.com',
     measurementId: 'G-K4G9WWCSMQ',
   );
 
@@ -55,7 +45,7 @@ class DefaultFirebaseOptions {
     appId: '1:864979396886:android:bf2328aa39cae3a82b0837',
     messagingSenderId: '864979396886',
     projectId: 'event-management-53181',
-    storageBucket: 'event-management-53181.firebasestorage.app',
+    storageBucket: 'event-management-53181.appspot.com',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
@@ -63,7 +53,7 @@ class DefaultFirebaseOptions {
     appId: '1:864979396886:ios:a305f69ea945b8822b0837',
     messagingSenderId: '864979396886',
     projectId: 'event-management-53181',
-    storageBucket: 'event-management-53181.firebasestorage.app',
+    storageBucket: 'event-management-53181.appspot.com',
     iosBundleId: 'com.example.eventManagementApp',
   );
 
@@ -72,7 +62,7 @@ class DefaultFirebaseOptions {
     appId: '1:864979396886:ios:a305f69ea945b8822b0837',
     messagingSenderId: '864979396886',
     projectId: 'event-management-53181',
-    storageBucket: 'event-management-53181.firebasestorage.app',
+    storageBucket: 'event-management-53181.appspot.com',
     iosBundleId: 'com.example.eventManagementApp',
   );
 
@@ -82,7 +72,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '864979396886',
     projectId: 'event-management-53181',
     authDomain: 'event-management-53181.firebaseapp.com',
-    storageBucket: 'event-management-53181.firebasestorage.app',
+    storageBucket: 'event-management-53181.appspot.com',
     measurementId: 'G-5ML88MP6KN',
   );
 }

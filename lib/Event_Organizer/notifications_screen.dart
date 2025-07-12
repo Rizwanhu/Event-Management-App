@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../Firebase/notification_service.dart';
 
 class NotificationsScreen extends StatefulWidget {
@@ -23,21 +25,31 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             onPressed: () async {
               await _notificationService.markAllAsRead();
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('All notifications marked as read')),
+                const SnackBar(
+                    content: Text('All notifications marked as read')),
               );
             },
-            child: const Text('Mark All Read', style: TextStyle(color: Colors.white)),
+            child: const Text('Mark All Read',
+                style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
-      body: StreamBuilder<List<NotificationModel>>(
-        stream: _notificationService.getNotifications(),
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('notifications')
+            .where('userId',
+                isEqualTo: FirebaseAuth.instance.currentUser?.uid ?? '')
+            .orderBy('createdAt', descending: true)
+            .limit(50)
+            .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
           if (snapshot.hasError) {
+            print(
+                'OrganizerNotificationsScreen: Error loading notifications: \\${snapshot.error}');
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -58,14 +70,25 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             );
           }
 
-          final notifications = snapshot.data ?? [];
+          final docs = snapshot.data?.docs ?? [];
+          // DEBUG PRINT: Log all raw notification documents
+          print(
+              'OrganizerNotificationsScreen: Raw notifications from Firestore:');
+          for (var doc in docs) {
+            print('DocID: \\${doc.id}, Data: \\${doc.data()}');
+          }
+          final notifications = docs
+              .map((doc) => NotificationModel.fromMap(
+                  doc.data() as Map<String, dynamic>, doc.id))
+              .toList();
 
           if (notifications.isEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.notifications_none, size: 64, color: Colors.grey.shade400),
+                  Icon(Icons.notifications_none,
+                      size: 64, color: Colors.grey.shade400),
                   const SizedBox(height: 16),
                   Text(
                     'No notifications yet',
@@ -113,7 +136,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         title: Text(
           notification.title,
           style: TextStyle(
-            fontWeight: notification.isRead ? FontWeight.normal : FontWeight.bold,
+            fontWeight:
+                notification.isRead ? FontWeight.normal : FontWeight.bold,
           ),
         ),
         subtitle: Column(
@@ -142,6 +166,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 ),
               ),
         onTap: () async {
+          print(
+              'Notification tapped: id=${notification.id}, type=${notification.type}, isRead=${notification.isRead}');
           if (!notification.isRead) {
             await _notificationService.markAsRead(notification.id);
           }

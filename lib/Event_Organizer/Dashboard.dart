@@ -9,6 +9,7 @@ import 'organizer_event_qna_screen.dart';
 import '../Firebase/event_management_service.dart';
 import '../Firebase/notification_service.dart';
 import '../Models/event_model.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class OrganizerDashboard extends StatefulWidget {
   const OrganizerDashboard({super.key});
@@ -913,6 +914,45 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                   ],
                 ),
               ),
+              Row(
+                children: [
+                  StreamBuilder<QuerySnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('events')
+                        .doc(event.id)
+                        .collection('likes')
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      final count = snapshot.data?.docs.length ?? 0;
+                      return Row(
+                        children: [
+                          const Icon(Icons.favorite, color: Colors.red, size: 16),
+                          const SizedBox(width: 3),
+                          Text('$count', style: const TextStyle(fontSize: 13, color: Colors.red)),
+                        ],
+                      );
+                    },
+                  ),
+                  const SizedBox(width: 12),
+                  StreamBuilder<QuerySnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('events')
+                        .doc(event.id)
+                        .collection('comments')
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      final count = snapshot.data?.docs.length ?? 0;
+                      return Row(
+                        // children: [
+                        //   const Icon(Icons.comment, color: Colors.blueGrey, size: 16),
+                        //   const SizedBox(width: 3),
+                        //   Text('$count', style: const TextStyle(fontSize: 13, color: Colors.blueGrey)),
+                        // ],
+                      );
+                    },
+                  ),
+                ],
+              ),
               _buildStatusBadge(event.status),
             ],
           ),
@@ -990,116 +1030,163 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
             LayoutBuilder(
               builder: (context, constraints) {
                 if (constraints.maxWidth > 300) {
-                  return Row(
+                  return Column(
                     children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () => _showBoostEventDialog(),
+                              icon: const Icon(Icons.trending_up, size: 16),
+                              label: const Text('Boost',
+                                  style: TextStyle(fontSize: 13)),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: _colorScheme.primary,
+                                side: BorderSide(color: _colorScheme.primary),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 8),
+                              ),
+                            ),
+                          ),
+                          //const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () => _editEvent(event),
+                              icon: const Icon(Icons.edit, size: 16),
+                              label: const Text('Edit',
+                                  style: TextStyle(fontSize: 13)),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: _colorScheme.primary,
+                                foregroundColor: Colors.white,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 8),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        OrganizerEventChatScreen(
+                                      eventId: event.id,
+                                      eventTitle: event.title,
+                                    ),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.chat, size: 16),
+                              label: const Text('View Chat',
+                                  style: TextStyle(fontSize: 13)),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.deepPurple,
+                                foregroundColor: Colors.white,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 8),
+                              ),
+                            ),
+                          ),
+                          //const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        OrganizerEventQNAScreen(
+                                      eventId: event.id,
+                                      eventTitle: event.title,
+                                    ),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.question_answer, size: 16),
+                              label: const Text('View Q&A',
+                                  style: TextStyle(fontSize: 13)),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.orange,
+                                foregroundColor: Colors.white,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 8),
+                              ),
+                            ),
+                          ),
+                          //const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        OrganizerEventCommentsScreen(
+                                      eventId: event.id,
+                                      eventTitle: event.title,
+                                    ),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.reviews, size: 16),
+                              label: const Text('View Comments',
+                                  style: TextStyle(fontSize: 13)),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.teal,
+                                foregroundColor: Colors.white,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 8),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  );
+                  // Remove extra closing parenthesis
+                } else {
+                  return Column(
+                    children: [
+                      Row(
+                    children: [    
                       Expanded(
+                        //width: double.infinity,
                         child: OutlinedButton.icon(
                           onPressed: () => _showBoostEventDialog(),
                           icon: const Icon(Icons.trending_up, size: 16),
-                          label: const Text('Boost',
-                              style: TextStyle(fontSize: 13)),
+                          label: const Text('Boost' , style: TextStyle(fontSize: 16),),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: _colorScheme.primary,
                             side: BorderSide(color: _colorScheme.primary),
-                            padding: const EdgeInsets.symmetric(vertical: 8),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 4),
                       Expanded(
+                        //width: double.infinity,
                         child: ElevatedButton.icon(
                           onPressed: () => _editEvent(event),
                           icon: const Icon(Icons.edit, size: 16),
-                          label: const Text('Edit',
-                              style: TextStyle(fontSize: 13)),
+                          label: const Text('Edit' , style: TextStyle(fontSize: 16),),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: _colorScheme.primary,
                             foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => OrganizerEventChatScreen(
-                                  eventId: event.id,
-                                  eventTitle: event.title,
-                                ),
-                              ),
-                            );
-                          },
-                          icon: const Icon(Icons.chat, size: 16),
-                          label: const Text('View Chat',
-                              style: TextStyle(fontSize: 13)),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.deepPurple,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => OrganizerEventQNAScreen(
-                                  eventId: event.id,
-                                  eventTitle: event.title,
-                                ),
-                              ),
-                            );
-                          },
-                          icon: const Icon(Icons.question_answer, size: 16),
-                          label: const Text('View Q&A',
-                              style: TextStyle(fontSize: 13)),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.orange,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 8),
                           ),
                         ),
                       ),
                     ],
-                  );
-                } else {
-                  return Column(
-                    children: [
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton.icon(
-                          onPressed: () => _showBoostEventDialog(),
-                          icon: const Icon(Icons.trending_up, size: 16),
-                          label: const Text('Boost'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: _colorScheme.primary,
-                            side: BorderSide(color: _colorScheme.primary),
-                          ),
-                        ),
                       ),
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: () => _editEvent(event),
-                          icon: const Icon(Icons.edit, size: 16),
-                          label: const Text('Edit'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _colorScheme.primary,
-                            foregroundColor: Colors.white,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        width: double.infinity,
+                      const SizedBox(height: 6),
+                      Row(
+                       children : [
+                      Expanded(
+                        //width: double.infinity,
                         child: ElevatedButton.icon(
                           onPressed: () {
                             Navigator.push(
@@ -1112,17 +1199,17 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                               ),
                             );
                           },
-                          icon: const Icon(Icons.chat, size: 16),
-                          label: const Text('View Chat'),
+                          icon: const Icon(Icons.chat, size: 14),
+                          label: const Text('View Chat' , style: TextStyle(fontSize: 13),),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.deepPurple,
+                            backgroundColor: const Color.fromARGB(255, 39, 216, 23),
                             foregroundColor: Colors.white,
                           ),
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        width: double.infinity,
+                      const SizedBox(width: 2),
+                      Expanded(
+                        //width: double.infinity,
                         child: ElevatedButton.icon(
                           onPressed: () {
                             Navigator.push(
@@ -1135,17 +1222,17 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                               ),
                             );
                           },
-                          icon: const Icon(Icons.question_answer, size: 16),
-                          label: const Text('View Q&A'),
+                          icon: const Icon(Icons.question_answer, size: 14),
+                          label: const Text('View Q&A' , style: TextStyle(fontSize: 13),),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.orange,
                             foregroundColor: Colors.white,
                           ),
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        width: double.infinity,
+                      const SizedBox(width: 2),
+                      Expanded(
+                        //width: double.infinity,
                         child: ElevatedButton.icon(
                           onPressed: () {
                             Navigator.push(
@@ -1159,13 +1246,15 @@ class _OrganizerDashboardState extends State<OrganizerDashboard>
                               ),
                             );
                           },
-                          icon: const Icon(Icons.reviews, size: 16),
-                          label: const Text('View Comments/Reviews'),
+                          icon: const Icon(Icons.reviews, size: 14),
+                          label: const Text('Comments' , style: TextStyle(fontSize: 12),),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.teal,
                             foregroundColor: Colors.white,
                           ),
                         ),
+                      ),
+                       ],
                       ),
                     ],
                   );

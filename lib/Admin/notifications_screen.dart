@@ -6,7 +6,8 @@ class AdminNotificationsScreen extends StatefulWidget {
   const AdminNotificationsScreen({super.key});
 
   @override
-  State<AdminNotificationsScreen> createState() => _AdminNotificationsScreenState();
+  State<AdminNotificationsScreen> createState() =>
+      _AdminNotificationsScreenState();
 }
 
 class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
@@ -42,14 +43,21 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
           ),
         ],
       ),
-      body: StreamBuilder<List<Map<String, dynamic>>>(
-        stream: _firebaseServices.getNotifications(),
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('notifications')
+            .where('targetRole', isEqualTo: 'admin')
+            .orderBy('createdAt', descending: true)
+            .limit(50)
+            .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
           if (snapshot.hasError) {
+            print(
+                'AdminNotificationsScreen: Error loading notifications: \\${snapshot.error}');
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -60,12 +68,22 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
                     'Error loading notifications',
                     style: TextStyle(fontSize: 18, color: Colors.red[600]),
                   ),
+                  const SizedBox(height: 8),
+                  ElevatedButton(
+                    onPressed: () => setState(() {}),
+                    child: const Text('Retry'),
+                  ),
                 ],
               ),
             );
           }
 
-          final notifications = snapshot.data ?? [];
+          final notifications = snapshot.data?.docs ?? [];
+          // DEBUG PRINT: Log all raw notification documents
+          print('AdminNotificationsScreen: Raw notifications from Firestore:');
+          for (var doc in notifications) {
+            print('DocID: \\${doc.id}, Data: \\${doc.data()}');
+          }
 
           if (notifications.isEmpty) {
             return _buildEmptyState();
@@ -75,7 +93,8 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
             padding: const EdgeInsets.all(16),
             itemCount: notifications.length,
             itemBuilder: (context, index) {
-              final notification = notifications[index];
+              final notification =
+                  notifications[index].data() as Map<String, dynamic>;
               return _buildNotificationCard(notification);
             },
           );
@@ -117,11 +136,18 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
   }
 
   Widget _buildNotificationCard(Map<String, dynamic> notification) {
-    final isRead = notification['isRead'] ?? false;
+    final isRead = notification['isRead'] == true;
     final title = notification['title'] ?? 'Notification';
     final message = notification['message'] ?? '';
     final type = notification['type'] ?? 'general';
     final createdAt = notification['createdAt'];
+
+    // Ensure notification has an 'id' field for Dismissible and deletion
+    if (notification['id'] == null &&
+        notification is Map<String, dynamic> &&
+        notification.containsKey('documentId')) {
+      notification['id'] = notification['documentId'];
+    }
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -239,14 +265,14 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
 
   String _formatTimestamp(dynamic timestamp) {
     if (timestamp == null) return 'Unknown time';
-    
+
     DateTime dateTime;
     if (timestamp is Timestamp) {
       dateTime = timestamp.toDate();
     } else {
       return 'Unknown time';
     }
-    
+
     final now = DateTime.now();
     final difference = now.difference(dateTime);
 

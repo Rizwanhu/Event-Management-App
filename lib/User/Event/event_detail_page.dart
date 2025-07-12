@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'widgets/event_detail_widgets.dart';
 import 'comments_page.dart';
 import 'models/event.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class EventDetailPage extends StatefulWidget {
   final Event event;
@@ -20,8 +22,8 @@ class EventDetailPage extends StatefulWidget {
 class _EventDetailPageState extends State<EventDetailPage> {
   bool isLiked = false;
   bool isRSVPd = false;
-  late int likeCount;
-  late int commentCount;
+  int likeCount = 0;
+  int commentCount = 0;
   String selectedPassType = '';
   late bool isEventPast;
   bool hasUserAttended = true; // Mock: User attended the event
@@ -30,9 +32,69 @@ class _EventDetailPageState extends State<EventDetailPage> {
   @override
   void initState() {
     super.initState();
-    likeCount = widget.event.likeCount;
-    commentCount = widget.event.commentCount;
     isEventPast = widget.event.isPast;
+    _setupLikeListener();
+    _setupUserLikeListener();
+    _setupCommentListener();
+    likeCount = 0;
+    commentCount = 0;
+  }
+
+  void _setupLikeListener() {
+    FirebaseFirestore.instance
+        .collection('events')
+        .doc(widget.event.id)
+        .collection('likes')
+        .snapshots()
+        .listen((snapshot) {
+      setState(() {
+        likeCount = snapshot.docs.length;
+      });
+    });
+  }
+
+  void _setupUserLikeListener() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    FirebaseFirestore.instance
+        .collection('events')
+        .doc(widget.event.id)
+        .collection('likes')
+        .doc(user.uid)
+        .snapshots()
+        .listen((doc) {
+      setState(() {
+        isLiked = doc.exists;
+      });
+    });
+  }
+
+  void _setupCommentListener() {
+    FirebaseFirestore.instance
+        .collection('events')
+        .doc(widget.event.id)
+        .collection('comments')
+        .snapshots()
+        .listen((snapshot) {
+      setState(() {
+        commentCount = snapshot.docs.length;
+      });
+    });
+  }
+
+  Future<void> _toggleLike() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    final likeRef = FirebaseFirestore.instance
+        .collection('events')
+        .doc(widget.event.id)
+        .collection('likes')
+        .doc(user.uid);
+    if (isLiked) {
+      await likeRef.delete();
+    } else {
+      await likeRef.set({'likedAt': FieldValue.serverTimestamp()});
+    }
   }
 
   @override
@@ -151,12 +213,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                     isLiked: isLiked,
                     likeCount: likeCount,
                     commentCount: commentCount,
-                    onLikePressed: () {
-                      setState(() {
-                        isLiked = !isLiked;
-                        likeCount += isLiked ? 1 : -1;
-                      });
-                    },
+                    onLikePressed: _toggleLike,
                     onCommentPressed: () => _showComments(),
                     onSharePressed: () => _showShareOptions(),
                   ),

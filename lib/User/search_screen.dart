@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'search_screen_widgets.dart';
 import '../Firebase/user_events_service.dart';
 import 'ProfileScreen.dart';
+import 'user_notifications_screen.dart';
 import 'promote_event_page.dart';
 import 'dart:async';
 
@@ -504,6 +505,19 @@ class _SearchEventsPageState extends State<SearchEventsPage> {
               const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         actions: [
+          // Notification icon
+          IconButton(
+            icon: const Icon(Icons.notifications, color: Colors.white),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => UserNotificationsScreen(),
+                ),
+              );
+            },
+            tooltip: 'Notifications',
+          ),
           // Debug toggle button
           IconButton(
             icon: Icon(
@@ -793,7 +807,8 @@ class _SearchEventsPageState extends State<SearchEventsPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e is FirebaseException ? '${e.code}: ${e.message}' : e.toString()}'),
+            content: Text(
+                'Error: ${e is FirebaseException ? '${e.code}: ${e.message}' : e.toString()}'),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),
@@ -823,7 +838,8 @@ class _SearchEventsPageState extends State<SearchEventsPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e is FirebaseException ? '${e.code}: ${e.message}' : e.toString()}'),
+            content: Text(
+                'Error: ${e is FirebaseException ? '${e.code}: ${e.message}' : e.toString()}'),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),
@@ -852,9 +868,8 @@ class _SearchEventsPageState extends State<SearchEventsPage> {
     } catch (e) {
       debugPrint('Error creating test events: ${e.toString()}');
       if (mounted) {
-        final message = e is FirebaseException 
-          ? 'Failed: ${e.code}' 
-          : 'Operation failed';
+        final message =
+            e is FirebaseException ? 'Failed: ${e.code}' : 'Operation failed';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(message),

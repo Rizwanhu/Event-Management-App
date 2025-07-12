@@ -7,7 +7,8 @@ import 'dart:io';
 import '../Models/event_model.dart';
 
 class EventManagementService {
-  static final EventManagementService _instance = EventManagementService._internal();
+  static final EventManagementService _instance =
+      EventManagementService._internal();
   factory EventManagementService() => _instance;
   EventManagementService._internal();
 
@@ -17,7 +18,8 @@ class EventManagementService {
 
   // Collection references
   CollectionReference get _eventsCollection => _firestore.collection('events');
-  CollectionReference get _approvalsCollection => _firestore.collection('event_approvals');
+  CollectionReference get _approvalsCollection =>
+      _firestore.collection('event_approvals');
 
   /// Create a new event
   Future<String> createEvent(EventModel event) async {
@@ -29,7 +31,7 @@ class EventManagementService {
 
       // Create event document
       final docRef = await _eventsCollection.add(event.toMap());
-      
+
       // Add to approval collection for admin review
       await _approvalsCollection.add({
         'eventId': docRef.id,
@@ -38,7 +40,9 @@ class EventManagementService {
         'organizerId': event.organizerId,
         'organizerName': event.organizerName,
         'eventDate': Timestamp.fromDate(event.eventDate),
-        'eventTime': event.eventTime != null ? '${event.eventTime!.hour}:${event.eventTime!.minute}' : null,
+        'eventTime': event.eventTime != null
+            ? '${event.eventTime!.hour}:${event.eventTime!.minute}'
+            : null,
         'location': event.location,
         'latitude': event.latitude,
         'longitude': event.longitude,
@@ -53,7 +57,24 @@ class EventManagementService {
         'submittedAt': FieldValue.serverTimestamp(),
         'createdAt': FieldValue.serverTimestamp(),
       });
-      
+
+      // Create admin notification for new event (with robust fields)
+      await _firestore.collection('notifications').add({
+        'title': 'New Event Pending Approval',
+        'message': 'Event "${event.title}" requires your approval.',
+        'type': 'event_pending_review',
+        'isRead': false,
+        'createdAt': FieldValue.serverTimestamp(),
+        'targetRole': 'admin',
+        'eventId': docRef.id,
+        'userId': '', // Always present for model compatibility
+        'data': {
+          'eventId': docRef.id,
+          'organizerId': event.organizerId,
+          'organizerName': event.organizerName,
+        },
+      });
+
       print('Event created successfully with ID: ${docRef.id}');
       return docRef.id;
     } catch (e) {
@@ -73,7 +94,7 @@ class EventManagementService {
       // Create event document without images
       final eventWithoutImages = event.copyWith(imageUrls: []);
       final docRef = await _eventsCollection.add(eventWithoutImages.toMap());
-      
+
       // Add to approval collection for admin review
       await _approvalsCollection.add({
         'eventId': docRef.id,
@@ -82,7 +103,9 @@ class EventManagementService {
         'organizerId': eventWithoutImages.organizerId,
         'organizerName': eventWithoutImages.organizerName,
         'eventDate': Timestamp.fromDate(eventWithoutImages.eventDate),
-        'eventTime': eventWithoutImages.eventTime != null ? '${eventWithoutImages.eventTime!.hour}:${eventWithoutImages.eventTime!.minute}' : null,
+        'eventTime': eventWithoutImages.eventTime != null
+            ? '${eventWithoutImages.eventTime!.hour}:${eventWithoutImages.eventTime!.minute}'
+            : null,
         'location': eventWithoutImages.location,
         'latitude': eventWithoutImages.latitude,
         'longitude': eventWithoutImages.longitude,
@@ -97,7 +120,7 @@ class EventManagementService {
         'submittedAt': FieldValue.serverTimestamp(),
         'createdAt': FieldValue.serverTimestamp(),
       });
-      
+
       print('Event created successfully without images with ID: ${docRef.id}');
       return docRef.id;
     } catch (e) {
@@ -128,7 +151,7 @@ class EventManagementService {
       // Update event with new timestamp
       final updatedEvent = event.copyWith(updatedAt: DateTime.now());
       await _eventsCollection.doc(eventId).update(updatedEvent.toMap());
-      
+
       print('Event updated successfully');
     } catch (e) {
       print('Error updating event: $e');
@@ -172,27 +195,32 @@ class EventManagementService {
     }
 
     print('Getting events for user: ${currentUser.uid}');
-    
+
     try {
       return _eventsCollection
           .where('organizerId', isEqualTo: currentUser.uid)
           .orderBy('createdAt', descending: true)
           .snapshots()
           .handleError((error) {
-            print('Firestore stream error: $error');
-            return <QuerySnapshot>[];
-          })
-          .map((snapshot) {
-            print('Stream snapshot received with ${snapshot.docs.length} documents');
-            return snapshot.docs.map((doc) {
+        print('Firestore stream error: $error');
+        return <QuerySnapshot>[];
+      }).map((snapshot) {
+        print(
+            'Stream snapshot received with ${snapshot.docs.length} documents');
+        return snapshot.docs
+            .map((doc) {
               try {
-                return EventModel.fromMap(doc.data() as Map<String, dynamic>, doc.id);
+                return EventModel.fromMap(
+                    doc.data() as Map<String, dynamic>, doc.id);
               } catch (e) {
                 print('Error parsing event document ${doc.id}: $e');
                 return null;
               }
-            }).where((event) => event != null).cast<EventModel>().toList();
-          });
+            })
+            .where((event) => event != null)
+            .cast<EventModel>()
+            .toList();
+      });
     } catch (e) {
       print('Error setting up events stream: $e');
       return Stream.value([]);
@@ -208,7 +236,7 @@ class EventManagementService {
       }
 
       print('Fetching events for user: ${currentUser.uid}');
-      
+
       final snapshot = await _eventsCollection
           .where('organizerId', isEqualTo: currentUser.uid)
           .orderBy('createdAt', descending: true)
@@ -216,7 +244,7 @@ class EventManagementService {
           .timeout(const Duration(seconds: 10));
 
       print('Found ${snapshot.docs.length} event documents');
-      
+
       return snapshot.docs.map((doc) {
         return EventModel.fromMap(doc.data() as Map<String, dynamic>, doc.id);
       }).toList();
@@ -241,9 +269,10 @@ class EventManagementService {
   }
 
   /// Upload event images to Firebase Storage
-  Future<List<String>> uploadEventImages(List<XFile> images, String eventId) async {
+  Future<List<String>> uploadEventImages(
+      List<XFile> images, String eventId) async {
     List<String> downloadUrls = [];
-    
+
     try {
       if (images.isEmpty) return [];
 
@@ -255,21 +284,27 @@ class EventManagementService {
       for (int i = 0; i < images.length; i++) {
         try {
           final file = images[i];
-          final fileName = 'event_${eventId}_image_${i}_${DateTime.now().millisecondsSinceEpoch}.jpg';
-          final ref = _storage.ref().child('event_images').child(eventId).child(fileName);
+          final fileName =
+              'event_${eventId}_image_${i}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+          final ref = _storage
+              .ref()
+              .child('event_images')
+              .child(eventId)
+              .child(fileName);
 
           print('Uploading image $i: $fileName');
-          
+
           // Upload file - handle both web and mobile with better error handling
           UploadTask uploadTask;
           if (kIsWeb) {
             // For web, read as bytes with better error handling
             try {
               final bytes = await file.readAsBytes().timeout(
-                const Duration(seconds: 30),
-                onTimeout: () => throw Exception('Timeout reading image bytes'),
-              );
-              
+                    const Duration(seconds: 30),
+                    onTimeout: () =>
+                        throw Exception('Timeout reading image bytes'),
+                  );
+
               // Create metadata with proper content type
               final metadata = SettableMetadata(
                 contentType: 'image/jpeg',
@@ -279,7 +314,7 @@ class EventManagementService {
                   'uploadedAt': DateTime.now().toIso8601String(),
                 },
               );
-              
+
               uploadTask = ref.putData(bytes, metadata);
             } catch (e) {
               print('Error reading bytes for image $i: $e');
@@ -295,16 +330,16 @@ class EventManagementService {
                 'uploadedAt': DateTime.now().toIso8601String(),
               },
             );
-            
+
             uploadTask = ref.putFile(File(file.path), metadata);
           }
-          
+
           // Upload with progress tracking and timeout
           final snapshot = await uploadTask.timeout(
             const Duration(minutes: 2),
             onTimeout: () => throw Exception('Upload timeout for image $i'),
           );
-          
+
           // Get download URL with retry logic
           String? downloadUrl;
           for (int retry = 0; retry < 3; retry++) {
@@ -313,17 +348,17 @@ class EventManagementService {
               break;
             } catch (e) {
               if (retry == 2) {
-                throw Exception('Failed to get download URL after 3 retries: $e');
+                throw Exception(
+                    'Failed to get download URL after 3 retries: $e');
               }
               await Future.delayed(Duration(seconds: retry + 1));
             }
           }
-          
+
           if (downloadUrl != null) {
             downloadUrls.add(downloadUrl);
             print('Image $i uploaded successfully');
           }
-          
         } catch (e) {
           print('Failed to upload image $i: $e');
           // Continue with other images instead of failing completely
@@ -331,9 +366,9 @@ class EventManagementService {
         }
       }
 
-      print('Successfully uploaded ${downloadUrls.length} out of ${images.length} images for event $eventId');
+      print(
+          'Successfully uploaded ${downloadUrls.length} out of ${images.length} images for event $eventId');
       return downloadUrls;
-      
     } catch (e) {
       print('Error uploading images: $e');
       // Return any successfully uploaded URLs instead of failing completely
@@ -348,7 +383,7 @@ class EventManagementService {
         'status': EventStatus.pending.toString().split('.').last,
         'updatedAt': Timestamp.fromDate(DateTime.now()),
       });
-      
+
       print('Event submitted for approval');
     } catch (e) {
       print('Error submitting event for approval: $e');
@@ -364,7 +399,26 @@ class EventManagementService {
         'isPublished': true,
         'updatedAt': Timestamp.fromDate(DateTime.now()),
       });
-      
+
+      // Fetch event and organizer info
+      final eventDoc = await _eventsCollection.doc(eventId).get();
+      if (eventDoc.exists) {
+        final eventData = eventDoc.data() as Map<String, dynamic>;
+        final organizerId = eventData['organizerId'];
+        final eventTitle = eventData['title'] ?? '';
+        // Create notification for organizer
+        await _firestore.collection('notifications').add({
+          'userId': organizerId,
+          'title': 'Event Approved',
+          'message':
+              'Your event "$eventTitle" has been approved and is now live!',
+          'type': 'event_approved',
+          'isRead': false,
+          'createdAt': FieldValue.serverTimestamp(),
+          'eventId': eventId,
+        });
+      }
+
       print('Event published successfully');
     } catch (e) {
       print('Error publishing event: $e');
@@ -380,7 +434,25 @@ class EventManagementService {
         'rejectionReason': reason,
         'updatedAt': Timestamp.fromDate(DateTime.now()),
       });
-      
+
+      // Fetch event and organizer info
+      final eventDoc = await _eventsCollection.doc(eventId).get();
+      if (eventDoc.exists) {
+        final eventData = eventDoc.data() as Map<String, dynamic>;
+        final organizerId = eventData['organizerId'];
+        final eventTitle = eventData['title'] ?? '';
+        // Create notification for organizer
+        await _firestore.collection('notifications').add({
+          'userId': organizerId,
+          'title': 'Event Rejected',
+          'message': 'Your event "$eventTitle" was rejected. Reason: $reason',
+          'type': 'event_rejected',
+          'isRead': false,
+          'createdAt': FieldValue.serverTimestamp(),
+          'eventId': eventId,
+        });
+      }
+
       print('Event cancelled successfully');
     } catch (e) {
       print('Error cancelling event: $e');
@@ -415,12 +487,12 @@ class EventManagementService {
       for (var doc in snapshot.docs) {
         final data = doc.data() as Map<String, dynamic>;
         final status = data['status'] as String;
-        
+
         if (status == 'live') liveEvents++;
         if (status == 'completed') completedEvents++;
-        
+
         totalAttendees += (data['currentAttendees'] as int?) ?? 0;
-        
+
         if (data['ticketType'] == 'paid') {
           final attendees = (data['currentAttendees'] as int?) ?? 0;
           final price = (data['ticketPrice'] as num?)?.toDouble() ?? 0.0;
@@ -479,7 +551,8 @@ class EventManagementService {
           .get();
 
       return snapshot.docs
-          .map((doc) => EventModel.fromMap(doc.data() as Map<String, dynamic>, doc.id))
+          .map((doc) =>
+              EventModel.fromMap(doc.data() as Map<String, dynamic>, doc.id))
           .where((event) =>
               event.title.toLowerCase().contains(query.toLowerCase()) ||
               event.description.toLowerCase().contains(query.toLowerCase()) ||
@@ -524,15 +597,16 @@ class EventManagementService {
       }
 
       print('Testing Firebase connection...');
-      
+
       // Try to read from Firestore with a simple query
       final testQuery = await _firestore
           .collection('events')
           .limit(1)
           .get()
           .timeout(const Duration(seconds: 5));
-      
-      print('Firebase connection test successful. Found ${testQuery.docs.length} documents');
+
+      print(
+          'Firebase connection test successful. Found ${testQuery.docs.length} documents');
       return true;
     } catch (e) {
       print('Firebase connection test failed: $e');
@@ -544,7 +618,7 @@ class EventManagementService {
   String _calculatePriority(EventModel event) {
     final now = DateTime.now();
     final daysUntilEvent = event.eventDate.difference(now).inDays;
-    
+
     if (daysUntilEvent <= 7) {
       return 'high';
     } else if (daysUntilEvent <= 30) {

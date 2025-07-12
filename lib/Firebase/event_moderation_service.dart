@@ -10,20 +10,20 @@ class EventModerationService {
   /// Get all pending events for admin moderation
   Stream<List<Map<String, dynamic>>> getPendingEvents() {
     print('Getting pending events stream...');
-    
+
     return _firestore
         .collection('events')
         .where('status', isEqualTo: 'pending')
         .snapshots()
         .map((snapshot) {
       print('Received ${snapshot.docs.length} pending events');
-      
+
       final events = snapshot.docs.map((doc) {
         Map<String, dynamic> data = doc.data();
         data['id'] = doc.id;
         return data;
       }).toList();
-      
+
       // Sort by creation date (newest first)
       events.sort((a, b) {
         final aTime = a['createdAt'] as Timestamp?;
@@ -33,7 +33,7 @@ class EventModerationService {
         if (bTime == null) return -1;
         return bTime.compareTo(aTime);
       });
-      
+
       return events;
     }).handleError((error) {
       print('Error in getPendingEvents stream: $error');
@@ -59,9 +59,7 @@ class EventModerationService {
           .where('status', isEqualTo: 'rejected')
           .get();
 
-      final totalSnapshot = await _firestore
-          .collection('events')
-          .get();
+      final totalSnapshot = await _firestore.collection('events').get();
 
       return {
         'pending': pendingSnapshot.docs.length,
@@ -89,7 +87,8 @@ class EventModerationService {
       }
 
       // Get event document first
-      DocumentSnapshot eventDoc = await _firestore.collection('events').doc(eventId).get();
+      DocumentSnapshot eventDoc =
+          await _firestore.collection('events').doc(eventId).get();
       if (!eventDoc.exists) {
         throw Exception('Event not found');
       }
@@ -122,9 +121,17 @@ class EventModerationService {
       await _notificationService.sendNotification(
         userId: eventData['organizerId'],
         title: 'Event Approved!',
-        message: 'Your event "${eventData['title']}" has been approved and is now live.',
+        message:
+            'Your event "${eventData['title']}" has been approved and is now live.',
         type: NotificationType.eventCreated, // Use appropriate type
         data: {'eventId': eventId, 'eventTitle': eventData['title']},
+      );
+
+      // Send notification to all users about the new event
+      await _notificationService.sendNewEventNotificationToAllUsers(
+        eventId: eventId,
+        eventName: eventData['title'],
+        organizerName: eventData['organizerName'] ?? 'Organizer',
       );
 
       print('Event $eventId approved successfully');
@@ -143,7 +150,8 @@ class EventModerationService {
       }
 
       // Get event document first
-      DocumentSnapshot eventDoc = await _firestore.collection('events').doc(eventId).get();
+      DocumentSnapshot eventDoc =
+          await _firestore.collection('events').doc(eventId).get();
       if (!eventDoc.exists) {
         throw Exception('Event not found');
       }
@@ -175,12 +183,11 @@ class EventModerationService {
       }
 
       // Send notification to organizer
-      await _notificationService.sendNotification(
-        userId: eventData['organizerId'],
-        title: 'Event Rejected',
-        message: 'Your event "${eventData['title']}" was rejected. Reason: $reason',
-        type: NotificationType.systemAlert, // Use appropriate type
-        data: {'eventId': eventId, 'eventTitle': eventData['title'], 'reason': reason},
+      await _notificationService.sendEventRejectionNotification(
+        organizerId: eventData['organizerId'],
+        eventId: eventId,
+        eventTitle: eventData['title'],
+        reason: reason,
       );
 
       print('Event $eventId rejected successfully');
@@ -193,7 +200,8 @@ class EventModerationService {
   /// Get event details by ID
   Future<Map<String, dynamic>?> getEventDetails(String eventId) async {
     try {
-      DocumentSnapshot eventDoc = await _firestore.collection('events').doc(eventId).get();
+      DocumentSnapshot eventDoc =
+          await _firestore.collection('events').doc(eventId).get();
       if (eventDoc.exists) {
         Map<String, dynamic> data = eventDoc.data() as Map<String, dynamic>;
         data['id'] = eventDoc.id;
@@ -210,7 +218,7 @@ class EventModerationService {
   Future<void> bulkApproveEvents(List<String> eventIds) async {
     final batch = _firestore.batch();
     final currentUser = _auth.currentUser;
-    
+
     if (currentUser == null) {
       throw Exception('Admin not authenticated');
     }
@@ -237,7 +245,7 @@ class EventModerationService {
   Future<void> bulkRejectEvents(List<String> eventIds, String reason) async {
     final batch = _firestore.batch();
     final currentUser = _auth.currentUser;
-    
+
     if (currentUser == null) {
       throw Exception('Admin not authenticated');
     }
@@ -263,10 +271,7 @@ class EventModerationService {
 
   /// Get all events for debugging (fallback method)
   Stream<List<Map<String, dynamic>>> getAllEvents() {
-    return _firestore
-        .collection('events')
-        .snapshots()
-        .map((snapshot) {
+    return _firestore.collection('events').snapshots().map((snapshot) {
       return snapshot.docs.map((doc) {
         Map<String, dynamic> data = doc.data();
         data['id'] = doc.id;
@@ -277,22 +282,20 @@ class EventModerationService {
 
   /// Get all pending events using alternative method
   Stream<List<Map<String, dynamic>>> getPendingEventsAlternative() {
-    return _firestore
-        .collection('events')
-        .snapshots()
-        .map((snapshot) {
+    return _firestore.collection('events').snapshots().map((snapshot) {
       final allEvents = snapshot.docs.map((doc) {
         Map<String, dynamic> data = doc.data();
         data['id'] = doc.id;
         return data;
       }).toList();
-      
+
       // Filter pending events manually
       final pendingEvents = allEvents.where((event) {
         final status = event['status'];
-        return status == 'pending' || status == null; // Include null status as pending
+        return status == 'pending' ||
+            status == null; // Include null status as pending
       }).toList();
-      
+
       // Sort by createdAt manually
       pendingEvents.sort((a, b) {
         final aTime = a['createdAt'] as Timestamp?;
@@ -300,7 +303,7 @@ class EventModerationService {
         if (aTime == null || bTime == null) return 0;
         return bTime.compareTo(aTime);
       });
-      
+
       return pendingEvents;
     });
   }
